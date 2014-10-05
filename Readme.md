@@ -8,7 +8,10 @@ OS: Ubuntu 14.04 - http://www.ubuntu.com/download/desktop
   Running dual boot with a Windows partition. It works seamlessly
 
 IDE: Light Table - http://www.lighttable.com/
-  Simple IDE, prettier than gedit. Definitely prettier than nano. Don't even think about vim unless you're pro.
+	Simple IDE, prettier than gedit. Definitely prettier than nano. Don't even think about vim unless you're pro.
+
+IDE: Eclipse - download at https://www.eclipse.org/downloads/
+	Setup: http://community.linuxmint.com/tutorial/view/864
 
 Python: Python 3 interpreter. This is important because Python 2.x has pretty significantly different syntax and is gonna cause problems
   run: sudo apt-get install python3
@@ -24,4 +27,6 @@ Git repository: https://github.com/Arlo012/ProjectOttershaw
 Git GUI: Git is kind of a pain by command line for a newbie like me. I am using SmartGit - http://www.syntevo.com/smartgit/
   Download, run, sync to our project. See tutorials online
 	NOTE: still need to run git pulls/pushes from the command line on the pi unless you VNC into it and use a GUI
+http://community.linuxmint.com/tutorial/view/864
 
+Bottle Framework: Server to run Python commands from LAN - http://bottlepy.org/docs/dev/index.html

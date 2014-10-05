@@ -1,6 +1,7 @@
 from bottle import route, run, get, post, request, static_file, error
 import os
 from Servo import servo
+from ctypes.wintypes import PINT
 
 #NOTE: edit html here - http://www.quackit.com/html/online-html-editor/full/
 
@@ -100,22 +101,44 @@ def restart():
 
 myServos = []
 
-#@route('/<action>/<item>')
-#def fireServo(servoID, angle):
-#    '''Fire locally tracked servo -- create in addServo'''
-#    myServo = servo("Test Location", 7)
-#    myServo.rotate(90)
+@route('/<action>/<item>')
+def fireServo(servoID, angle):
+    '''Fire locally tracked servo -- create in addServo'''
+    myServo = servo("Test Location", 7)
+    myServo.rotate(90)
 
-@route('/addServo/<pin>')
+@route('/addServo/')
 def addServo(pin):
-    global currentServoID
-    
-    '''Add servo to locally tracked array'''
-    myServo = servo(currentServoID, pin)
-    myServos.append(myServo)
-    print("Added servo with ID = " + str(currentServoID))
-    currentServoID += 1
+    return static_file('createservo.html', root = htmlRoot)
 
+@post('/addServo') # or @route('/servo', method='POST')
+def doAddServo():
+    '''Create a servo page, adding it to myServos[] array'''
+    # TODO - create serialization of created servos for later loading
+    servo_ID = request.forms.get('servo_ID')
+    bcm_pin = request.forms.get('bcm_pin')
+    servo_loc = request.forms.get('location')
+    
+    # Make sure nobody has entered a servo on this pin already
+    if checkPinUnique(bcm_pin):
+        servoToAdd = servo.servo(servo_loc, bcm_pin, servo_ID)
+        myServos.append(servoToAdd)
+        return "<p> A servo located at " + servoToAdd.getLocation + " was added on pin " + servoToAdd.getPin() + " with a uniqueID of: " + servoToAdd.getID() + "</p>"
+    else:
+        for servo in myServos:
+            if servo.getPin() == bcm_pin:
+                return "<p>A servo on this pin already exists with unique ID = " + servo.getPin() + "</p>"
+        return "<p>A servo on this pin already exists... but I can't find it. That's bad</p>"
+
+def checkPinUnique(pin):
+    '''Ensure pinout for servo is unique
+    Iterate through all created servos checking for 
+    duplicate pins
+    '''
+    for servo in myServos:
+        if servo.getPin() == pin:
+            return False
+    return True
 
 pass
 #-----------------------
