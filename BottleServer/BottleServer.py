@@ -144,5 +144,5 @@ print("HTML root set to " + htmlRoot)
 currentServoID = 0
 
 # NOTE: CHANGE ME WHEN IMPORTING TO NEW MACHINE
-run(host='192.168.1.147', port=8080, debug=True)
+run(host='192.168.1.119', port=8080, debug=True)
 #run(host='68.198.140.81', port=8081, debug=True)
