@@ -124,7 +124,7 @@ def doAddServo():
     servo_loc = request.forms.get('location')
     
     # Make sure nobody has entered a servo on this pin already
-    if checkPinUnique(bcm_pin):
+    if not checkPinUsed(bcm_pin):
         servoToAdd = Servo.servo(servo_loc, bcm_pin, servo_ID)
         myServos.append(servoToAdd)
 	# TODO -- fix broken location in output string
@@ -135,15 +135,43 @@ def doAddServo():
                 return "<p>A servo on this pin already exists with unique ID  = " + servo.getID() + "</p>"
         return "<p>A servo on this pin already exists... but I can't find it. That's bad</p>"
 
-def checkPinUnique(pin):
-    '''Ensure pinout for servo is unique
+def checkPinUsed(pin):
+    '''Check if a pin is already in use by a servo
     Iterate through all created servos checking for 
     duplicate pins
     '''
     for servo in myServos:
         if servo.getPin() == pin:
-            return False
-    return True
+            return True
+    return False
+
+def findServo(ID):
+    '''Find servo with a provided unique ID'''
+    for servo in myServos:
+        if servo.getID == ID:
+            return servo
+    return None
+
+@get('/fireServo')
+def fireServo():
+    return static_file('fireservo.html', root = htmlRoot)
+
+
+@post('/fireServo')
+def doFireServo():
+    '''Fire servo page, choosing from myServos[] array'''
+   # TODO -- no access from URL, only via login html files
+
+    print("Firing a servo....")
+    servo_ID = request.forms.get('servo_ID')
+    fire_angle = request.forms.get('fire_angle')
+    
+    servoToFire = findServo(servo_ID)
+    if servoToFire != None:
+        servoToFire.rotate(fire_angle)
+    else:
+        return "<p>No servo with this ID could be found. Are you sure you created it? </p>"
+   
 
 pass
 #-----------------------

@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+	<title>Fire a Servo</title>
+</head>
+<body>
+<p>Select a servo to fire and an angle to fire it:</p>
+
+<form action="/addServo" method="post">
+<p>Servo ID (unique):&nbsp;<input maxlength="2" name="servo_ID" size="15" type="text" /></p>
+
+<p>Angle: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<input maxlength="4" name="fire_angle" size="15" type="text" /></p>
+
+<p><input name="Fire_servo" type="submit" value="Fire" /></p>
+</form>
+
+<p>&nbsp;</p>
+</body>
+</html>
