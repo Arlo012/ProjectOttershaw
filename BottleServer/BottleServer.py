@@ -102,12 +102,6 @@ def restart():
 
 myServos = []
 
-@route('/<action>/<item>')
-def fireServo(servoID, angle):
-    '''Fire locally tracked servo -- create in addServo'''
-    myServo = servo("Test Location", 7)
-    myServo.rotate(90)
-
 @get('/addServo')
 def addServo():
     return static_file('createservo.html', root = htmlRoot)
@@ -119,9 +113,9 @@ def doAddServo():
     '''Create a servo page, adding it to myServos[] array'''
     # TODO - create serialization of created servos for later loading
     print("Adding a servo....")
-    servo_ID = request.forms.get('servo_ID')
-    bcm_pin = request.forms.get('bcm_pin')
-    servo_loc = request.forms.get('location')
+    servo_ID = int(request.forms.get('servo_ID'))
+    bcm_pin = int(request.forms.get('bcm_pin'))
+    servo_loc = str(request.forms.get('location'))
     
     # Make sure nobody has entered a servo on this pin already
     if not checkPinUsed(bcm_pin):
@@ -147,8 +141,9 @@ def checkPinUsed(pin):
 
 def findServo(ID):
     '''Find servo with a provided unique ID'''
+    print("Searcing for servo with provided ID of: " + str(ID))
     for servo in myServos:
-        if servo.getID == ID:
+        if servo.getID() == int(ID):
             return servo
     return None
 
@@ -169,6 +164,7 @@ def doFireServo():
     servoToFire = findServo(servo_ID)
     if servoToFire != None:
         servoToFire.rotate(fire_angle)
+        return "<p> Fired servo! </p>"
     else:
         return "<p>No servo with this ID could be found. Are you sure you created it? </p>"
    

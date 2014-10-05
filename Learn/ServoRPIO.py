@@ -22,11 +22,11 @@ pin = 7
 #--------------------------------------------------
 # Assign PWM duty cycle http://pythonhosted.org/RPIO/pwm_py.html#examples
 #--------------------------------------------------
-PWM.add_channel_pulse(1, pin, 0, 1000)
+PWM.add_channel_pulse(1, pin, 0, 1500)
 time.sleep(5)
 PWM.add_channel_pulse(1, pin, 0, 2000)
 time.sleep(5)
-PWM.add_channel_pulse(1, pin, 0, 1500)
+PWM.add_channel_pulse(1, pin, 0, 1000)
 time.sleep(5)
 
 #------------------------------------------------------

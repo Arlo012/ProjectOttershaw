@@ -6,20 +6,24 @@ class servo:
     '''A servo, and associated methods of controlling it'''
     
     def __init__(self, myLocation, myPin, uniqueID):
-        self.location = myLocation
+        self.location = str(myLocation)
         self.rotation = 0
-        self.pin = myPin
-        self.ID = uniqueID
+        self.pin = int(myPin)
+        self.ID = int(uniqueID)
+        if not isSetup:
+            PWMsetup()
         
-    def rotate(self, angle):
+    def rotate(self, _angle):
         '''Rotate this servo by a given angle'''
+        angle = int(_angle)
         pwmAngle = 0
         try:
             if abs(angle) > 180:
                 raise Exception('Out of bounds servo rotation')
             else: 
-                pwmAngle = 1000 + (angle/180) * 1000
-                PWM.add_channel_pulse(1, pin, 0, pwmAngle)
+                pwmAngle = int(1000 + (angle/180) * 1000)
+                print("PWM timer of " + str(pwmAngle))
+                PWM.add_channel_pulse(1, self.pin, 0, pwmAngle)
         except Exception as detail:
             print(detail)
             
@@ -42,6 +46,8 @@ class servo:
     
 # Static stuff below here, outside the class
 
+isSetup = False
+
 def PWMsetup():
     '''Call me to setup servo channel at start of program'''
     
@@ -49,8 +55,11 @@ def PWMsetup():
     # set up PWM pulse increment to 1us
     #--------------------------------------------------
     PWM.setup(1)
+    PWM.init_channel(1, 20000)
+    isSetup = True
     
 def PWMcleanup():
     '''Call me at servo shutdown'''
     PWM.clear_channel(1)
     PWM.cleanup()
+    isSetup = False
