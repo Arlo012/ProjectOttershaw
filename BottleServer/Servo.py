@@ -5,10 +5,11 @@ import math
 class servo:
     '''A servo, and associated methods of controlling it'''
     
-    def __init__(self, myLocation, myPin):
+    def __init__(self, myLocation, myPin, uniqueID):
         self.location = myLocation
         self.rotation = 0
         self.pin = myPin
+        self.ID = uniqueID
         
     def rotate(self, angle):
         '''Rotate this servo by a given angle'''
@@ -28,6 +29,15 @@ class servo:
         See http://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
         '''
         self.pin = newPin
+        
+    def getPin(self):
+        return self.pin
+    
+    def getLocation(self):
+        return self.location
+    
+    def getID(self):
+        return self.ID
     
     
 # Static stuff below here, outside the class
