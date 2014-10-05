@@ -1,7 +1,7 @@
 from bottle import route, run, get, post, request, static_file, error
 import os
-from Servo import servo
-from ctypes.wintypes import PINT
+import Servo
+
 
 #NOTE: edit html here - http://www.quackit.com/html/online-html-editor/full/
 
@@ -15,6 +15,7 @@ def setRunPath(filepath):
     directoryPath = filepath
     while not directoryPath.endswith('/'):
         directoryPath = directoryPath[:-1]
+    directoryPath = directoryPath[:-1]  # remove trailing slash for compatibility with Bottle static routing
     return directoryPath
                
 @get('/<filename:re:.*\.(jpg|png|gif|ico)>')
@@ -107,27 +108,31 @@ def fireServo(servoID, angle):
     myServo = servo("Test Location", 7)
     myServo.rotate(90)
 
-@route('/addServo/')
-def addServo(pin):
+@get('/addServo')
+def addServo():
     return static_file('createservo.html', root = htmlRoot)
 
 @post('/addServo') # or @route('/servo', method='POST')
 def doAddServo():
+   # TODO -- no access from URL, only via login html files
+
     '''Create a servo page, adding it to myServos[] array'''
     # TODO - create serialization of created servos for later loading
+    print("Adding a servo....")
     servo_ID = request.forms.get('servo_ID')
     bcm_pin = request.forms.get('bcm_pin')
     servo_loc = request.forms.get('location')
     
     # Make sure nobody has entered a servo on this pin already
     if checkPinUnique(bcm_pin):
-        servoToAdd = servo.servo(servo_loc, bcm_pin, servo_ID)
+        servoToAdd = Servo.servo(servo_loc, bcm_pin, servo_ID)
         myServos.append(servoToAdd)
-        return "<p> A servo located at " + servoToAdd.getLocation + " was added on pin " + servoToAdd.getPin() + " with a uniqueID of: " + servoToAdd.getID() + "</p>"
+	# TODO -- fix broken location in output string
+        return "<p> A servo located at " +str(servoToAdd.getLocation) + " was added on pin " + str(servoToAdd.getPin()) + " with a uniqueID of: " + str(servoToAdd.getID()) + "</p>"
     else:
         for servo in myServos:
             if servo.getPin() == bcm_pin:
-                return "<p>A servo on this pin already exists with unique ID = " + servo.getPin() + "</p>"
+                return "<p>A servo on this pin already exists with unique ID  = " + servo.getID() + "</p>"
         return "<p>A servo on this pin already exists... but I can't find it. That's bad</p>"
 
 def checkPinUnique(pin):
