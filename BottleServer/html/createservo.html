@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+	<title>Create a Servo</title>
+</head>
+<body>
+<p>Add a servo below:</p>
+
+<form action ="/addServo" method="post">
+<p>Servo ID (unique):&nbsp;<input maxlength="2" name="servo_ID" size="15" type="text" /></p>
+
+<p>BCM Pinout: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<input maxlength="2" name="bcm_pin" size="15" type="text" /></p>
+
+<p>Servo Location: &nbsp; &nbsp; &nbsp;<input maxlength="15" name="location" size="15" type="text" /></p>
+
+<p><input name="Add_Servo" type="submit" value="Add" /></p>
+</form>
+
+<p>&nbsp;</p>
+
+<p>Note: see <a href="http://elinux.org/RPi_Low-level_peripherals">this wiki</a> for pinout &lt;--&gt; BCM&nbsp;conversion</p>
+</body>
+</html>

@@ -22,17 +22,19 @@ pin = 7
 #--------------------------------------------------
 # Assign PWM duty cycle http://pythonhosted.org/RPIO/pwm_py.html#examples
 #--------------------------------------------------
-PWM.add_channel_pulse(1, pin, 0, 1000)
-time.sleep(5)
-PWM.add_channel_pulse(1, pin, 0, 2000)
-time.sleep(5)
-PWM.add_channel_pulse(1, pin, 0, 1500)
-time.sleep(5)
-
+while True:
+   PWM.add_channel_pulse(1, pin, 0, 400)
+   time.sleep(.5)
+   PWM.add_channel_pulse(1, pin, 0, 1200)
+   time.sleep(.5)
+   PWM.add_channel_pulse(1, pin, 0, 2000)
+   time.sleep(.5)
+   PWM.add_channel_pulse(1, pin, 0, 1200)
+   time.sleep(.5)
 #------------------------------------------------------
 # Clear each GPIO from the channel one by one
 #------------------------------------------------------
-PWM.clear_channel_gpio(1, 25)
+PWM.clear_channel_gpio(1, 7)
 time.sleep(1)
 
 #------------------------------------------------------
