@@ -173,6 +173,9 @@ def saveLoadServos():
 
 @post('/saveLoadServos') # or @route('/servo', method='POST')
 def saveLoadServos():
+    #Python requires that you explicitly tell it you want to use the global version of myServos
+    global myServos
+
     #Import serialization within Python
     import pickle       
     
@@ -186,13 +189,13 @@ def saveLoadServos():
         if len(myServos) > 0:
             with open('servos.pickle', 'wb') as f:
                 pickle.dump(myServos, f)
-            print("Serialized " + len(myServos) + " servos")
+            print("Serialized " + str(len(myServos)) + " servos")
     elif loadServos == True:
         print("Load servos request")
         # CHECK FOR FILE EXIST
         with open('servos.pickle', 'rb') as f:
             myServos = pickle.load(f)
-        print("Loaded " + len(myServos) + " servos")
+        print("Loaded " + str(len(myServos)) + " servos")
 
 
 pass
