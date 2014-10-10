@@ -179,7 +179,7 @@ def saveLoadServos():
     global myServos
 
     #Import serialization within Python
-    import json       
+    import pickle       
     
     saveServos = bool(request.forms.get('Save_Servos'))
     loadServos = bool(request.forms.get('Load_Servos'))
@@ -189,14 +189,14 @@ def saveLoadServos():
         
         # Only serialize the servos if they... exist
         if len(myServos) > 0:
-            with open('servos.json', mode='w', encoding='utf-8') as f:
-                json.dump(myServos, f, indent=2)
+            with open('servos.pickle', mode='wb') as f:
+                pickle.dump(myServos, f)
             print("Serialized " + str(len(myServos)) + " servos")
     elif loadServos == True:
         print("Load servos request")
         # TODO - CHECK FOR FILE EXIST
-        with open('servos.json', 'r', encoding='utf-8') as f:
-            myServos = json.load(f)
+        with open('servos.pickle', 'rb') as f:
+            myServos = pickle.load(f)
         print("Loaded " + str(len(myServos)) + " servos")
 
     # TODO - test JSON serialization. Can create problems in data structures
