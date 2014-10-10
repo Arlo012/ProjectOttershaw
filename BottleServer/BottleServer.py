@@ -121,7 +121,7 @@ def doAddServo():
     if not checkPinUsed(bcm_pin):
         servoToAdd = Servo.servo(servo_loc, bcm_pin, servo_ID)
         myServos.append(servoToAdd)
-	# TODO -- fix broken location in output string
+	    # TODO -- fix broken location in output string
         return "<p> A servo located at " +str(servoToAdd.getLocation) + " was added on pin " + str(servoToAdd.getPin()) + " with a uniqueID of: " + str(servoToAdd.getID()) + "</p>"
     else:
         for servo in myServos:
@@ -151,7 +151,6 @@ def findServo(ID):
 def fireServo():
     return static_file('fireservo.html', root = htmlRoot)
 
-
 @post('/fireServo')
 def doFireServo():
     '''Fire servo page, choosing from myServos[] array'''
@@ -168,6 +167,19 @@ def doFireServo():
     else:
         return "<p>No servo with this ID could be found. Are you sure you created it? </p>"
    
+@get('/saveLoadServos')
+def saveLoadServos():
+    return static_file('saveLoadServos.html', root = htmlRoot)
+
+@post('/saveLoadServos') # or @route('/servo', method='POST')
+def saveLoadServos():
+    saveServos = bool(request.forms.get('Save_Servos'))
+    loadServos = bool(request.forms.get('Load_Servos'))
+    if saveServos == True:
+        print("Save servos request")
+    elif loadServos == true:
+        print("Load servos request")
+
 
 pass
 #-----------------------
