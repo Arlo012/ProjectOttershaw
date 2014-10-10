@@ -173,12 +173,26 @@ def saveLoadServos():
 
 @post('/saveLoadServos') # or @route('/servo', method='POST')
 def saveLoadServos():
+    #Import serialization within Python
+    import pickle       
+    
     saveServos = bool(request.forms.get('Save_Servos'))
     loadServos = bool(request.forms.get('Load_Servos'))
     if saveServos == True:
         print("Save servos request")
-    elif loadServos == true:
+        # http://www.diveintopython3.net/serializing.html
+        
+        # Only serialize the servos if they... exist
+        if len(myServos) > 0:
+            with open('servos.pickle', 'wb') as f:
+                pickle.dump(myServos, f)
+            print("Serialized " + len(myServos) + " servos")
+    elif loadServos == True:
         print("Load servos request")
+        # CHECK FOR FILE EXIST
+        with open('servos.pickle', 'rb') as f:
+            myServos = pickle.load(f)
+        print("Loaded " + len(myServos) + " servos")
 
 
 pass
