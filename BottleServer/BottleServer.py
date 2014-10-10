@@ -5,7 +5,7 @@ import Servo
 
 #NOTE: edit html here - http://www.quackit.com/html/online-html-editor/full/
 
-__version__ = 'Ottershaw Alpha Server Version 0.002'
+__version__ = 'Ottershaw Alpha Server Version 0.003'
 
 #-----------------------
 #      Setup
@@ -88,6 +88,8 @@ pass
 #-----------------------
 # Development & Administration
 #-----------------------
+
+#TODO implement some of these into a debugger class
 
 def admin():
     return static_file('admin.html', root = htmlRoot)
@@ -177,7 +179,7 @@ def saveLoadServos():
     global myServos
 
     #Import serialization within Python
-    import pickle       
+    import json       
     
     saveServos = bool(request.forms.get('Save_Servos'))
     loadServos = bool(request.forms.get('Load_Servos'))
@@ -187,15 +189,29 @@ def saveLoadServos():
         
         # Only serialize the servos if they... exist
         if len(myServos) > 0:
-            with open('servos.pickle', 'wb') as f:
-                pickle.dump(myServos, f)
+            with open('servos.json', mode='w', encoding='utf-8') as f:
+                json.dump(myServos, f, indent=2)
             print("Serialized " + str(len(myServos)) + " servos")
     elif loadServos == True:
         print("Load servos request")
-        # CHECK FOR FILE EXIST
-        with open('servos.pickle', 'rb') as f:
-            myServos = pickle.load(f)
+        # TODO - CHECK FOR FILE EXIST
+        with open('servos.json', 'r', encoding='utf-8') as f:
+            myServos = json.load(f)
         print("Loaded " + str(len(myServos)) + " servos")
+
+    # TODO - test JSON serialization. Can create problems in data structures
+        # See: http://www.diveintopython3.net/serializing.html
+
+# TODO, with delete functionality
+@get('/listServos')
+def listServos():
+    return static_file('listServos.html', root = htmlRoot)
+
+# TODO: arrow key implementation of servo movement
+# Wait for implementation of spider board
+@get('/servoController')
+def servoController():
+    return static_file('servoController.html', root = htmlRoot)
 
 
 pass
@@ -215,7 +231,7 @@ def error404(error):
 # Set the working directory of this python instance
 __root = setRunPath(os.path.realpath(__file__))
 
-# Set all static serving directories
+# Set all static file serving directories
 imageRoot = str(__root) + "/Images"
 print("Image root set to " + imageRoot)
 
