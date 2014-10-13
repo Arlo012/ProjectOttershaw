@@ -1,5 +1,6 @@
 Git is what we are going to use for our version control. The problem is that when many people (and even only one person) edit code, problems of compatability can come up that will leave everyone scratching their heads. Git (or SVN, or countless other versioning schemes) allows us to revert to previous revisions and determine what went wrong.
 
+(this is a test from Jorge's machine)
 
 
 My current setup:
