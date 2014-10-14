@@ -24,15 +24,20 @@
 
 // this constant won't change.  It's the pin number
 // of the sensor's output:
-const int pingPin = 7;
+const int pingPin = 3;
 
 void setup() {
   // initialize serial communication:
+  pinMode(2, OUTPUT); //attach pin 2 to VCC
+  pinMode(5, OUTPUT); //attach pin 5 to GND
+  pinMode(pingPin, OUTPUT); //attach pin 3 to Trig
+  pinMode(4, INPUT); //attach pin 4 to Echo
   Serial.begin(9600);
 }
 
 void loop()
 {
+  digitalWrite(2, HIGH);
   // establish variables for duration of the ping, 
   // and the distance result in inches and centimeters:
   long duration, inches, cm;
@@ -49,8 +54,7 @@ void loop()
   // The same pin is used to read the signal from the PING))): a HIGH
   // pulse whose duration is the time (in microseconds) from the sending
   // of the ping to the reception of its echo off of an object.
-  pinMode(pingPin, INPUT);
-  duration = pulseIn(pingPin, HIGH);
+  duration = pulseIn(4, HIGH);
 
   // convert the time into a distance
   inches = microsecondsToInches(duration);
