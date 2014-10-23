@@ -1,6 +1,6 @@
 void setup()
 {
-
+	Serial.begin(9600);
 }
 char command_char;
 char command[20];
