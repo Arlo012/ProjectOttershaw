@@ -1,6 +1,7 @@
 import serial
 import collections
 import queue
+import time
 #import Singleton
 
 class Singleton:
@@ -49,7 +50,7 @@ class SerialComm:
     receivedDataID = 0
     
     def __init__(self):
-        self.ser = serial.Serial('/dev/ttyACM0', 9600, timeout = 0.5)
+        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout = 0.5, writeTimeout = 0.5)
         
         #Queue of SerialCmd objects
         self.commandQueue = queue.Queue()
@@ -58,12 +59,16 @@ class SerialComm:
         #List of responses from serial comm
         self.receivedList = []
         print("Successfully initialized SerialComm")
-            
+    
+    def cleanup(self):
+        '''Cleanup at end of serial communication'''
+        self.ser.close()
         
     def read(self, command):
         '''
         Read in a command that was sent to the Arduino,
         and then get the response and add to received list
+        on top of the existing command.
         '''
         
         #Read in serial value waiting on Arduino
@@ -77,6 +82,7 @@ class SerialComm:
         self.receivedList.append(command)
     
     def sendNextCmd(self):
+        '''Send the next command in the command queue over serial line'''
         if(self.commandQueue.qsize() > 0):
             self.unparsedCommand = self.commandQueue.get()
             self.stringToSend = str(self.unparsedCommand.command)
@@ -85,6 +91,8 @@ class SerialComm:
             
             print("Sending command: " + self.stringToSend)
             self.ser.write(bytes(self.stringToSend, 'UTF-8'))
+            
+            #Read back the response from the arduino, append to the command
             self.read(self.unparsedCommand)
         else:
             print("No command to send over serial comm!")
@@ -103,6 +111,19 @@ class SerialComm:
             
         print("Failed to find response item for provided ID: " + str(ID))
         return "[No response]"
+    
+    def flushBuffers(self):
+        '''Clear the serial buffers (in and out)'''
+        self.ser.flush()
+    
+    def flushInputBuffer(self):
+        '''Clear input serial buffer'''
+        self.ser.flushInput()
+    
+    def flushOutputBuffer(self):
+        '''Clear output serial buffer'''
+        self.ser.flushOutput()
+
             
 class SerialCmd:
     '''Data structure of commands to be sent to Arduino over serial'''
@@ -122,18 +143,14 @@ class SerialCmd:
 
 '''TEST STRUCTURE'''
 test = SerialComm.Instance()
-command = SerialCmd("MoveServo", "90,")
-test.addCmd(command)
-#print("Commands pending: " + str(test.commandQueue.qsize()))
+#command = SerialCmd("MoveServo", "90,")
+test.ser.write(bytes("TEST123", 'ASCII'))
+#test.sendNextCmd()
+#print("Values in waiting on receive buffer: " + str(test.ser.inWaiting()))
+#test.flushOutputBuffer()
+#time.sleep(1)
+test.cleanup
 
-i = 0
-while i < 50:
-    test.addCmd(command)
-    test.sendNextCmd()
-    #print("Command sent. Current commands pending: " + str(test.commandQueue.qsize()))
-    print("Read response: " + str(test.getResponse(command.ID)))
-    i += 1
-    
-    
+
 
 
