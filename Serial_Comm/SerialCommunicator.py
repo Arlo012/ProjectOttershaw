@@ -1,7 +1,8 @@
-import serial
+from serial import Serial
 import collections
 import queue
 import time
+from lib2to3.fixer_util import String
 #import Singleton
 
 class Singleton:
@@ -50,7 +51,12 @@ class SerialComm:
     receivedDataID = 0
     
     def __init__(self):
-        self.ser = serial.Serial('/dev/ttyACM1', 9600, timeout = 0.5, writeTimeout = 0.5)
+        #Open serial connection to the Arduino, restarting it.
+        #Setup parameters baud rate, and timeouts
+        self.ser = Serial('/dev/ttyACM0', 115200, timeout = .5, writeTimeout = .5)
+        
+        #Need to sleep in order to give the Arduino time to boot up
+        time.sleep(3)
         
         #Queue of SerialCmd objects
         self.commandQueue = queue.Queue()
@@ -84,13 +90,10 @@ class SerialComm:
     def sendNextCmd(self):
         '''Send the next command in the command queue over serial line'''
         if(self.commandQueue.qsize() > 0):
-            self.unparsedCommand = self.commandQueue.get()
-            self.stringToSend = str(self.unparsedCommand.command)
-            self.stringToSend += ","
-            self.stringToSend += str(self.unparsedCommand.paramList)
+            self.stringToSend = self.commandQueue.get().commandString
             
             print("Sending command: " + self.stringToSend)
-            self.ser.write(bytes(self.stringToSend, 'UTF-8'))
+            self.ser.write(bytes(self.stringToSend, 'ASCII'))
             
             #Read back the response from the arduino, append to the command
             self.read(self.unparsedCommand)
@@ -103,6 +106,8 @@ class SerialComm:
         
     def getResponse(self, ID):
         '''Get the response to the command based on unique ID'''
+        
+        #FORGOT WHAT THIS DOES -- SHIT
         for item in self.receivedList:
             if item.ID == ID:
                 self.tempItem = item.response
@@ -124,33 +129,102 @@ class SerialComm:
         '''Clear output serial buffer'''
         self.ser.flushOutput()
 
-            
+          
 class SerialCmd:
-    '''Data structure of commands to be sent to Arduino over serial'''
+    '''
+    Data structure of commands to be sent to Arduino over serial
+    Format follows:
+    Prefix: #
+    Type (example): Servo
+    Separator: !
+    Param 1 (example): 1
+    Separator: !
+    Param 2: 90
+    Suffix: *
+    '''
     responseID = 0
-    
+
     def __init__(self, command, paramList):
         self.command = str(command)
         
         #Comma separated value of parameters to send
         self.paramList = str(paramList)
         
+        #Build string to send out over serial line
+        self.commandString = "#"
+        self.commandString += self.command
+        self.commandString += "!"
+        self.commandString += self.paramList[0]
+        self.commandString += "!"
+        self.commandString += self.paramList[1]
+        self.commandString += "*"
+        
         self.ID = self.responseID
         self.responseID += 1
         
         #Holder for response to serial command
-        self.response = []        
-
+        self.response = []  
+        
+    def decodeResponse(self, rawResponse):
+        '''
+        Decode response from Arduino of following format:
+        Prefix: $
+        Message: "~whatever"
+        Suffix: *
+        '''
+        #Flags for message processing
+        self.startFlagFound = False
+        self.messageFound = False
+        self.endFlagFound = False
+        
+        self.decodedMessage = ""
+        
+        for char in rawResponse:
+            if char is "$":
+                self.startFlagFound = True
+            elif char is "*":
+                self.endFlagFound = True
+                return self.decodedMessage
+            elif self.startFlagFound and not self.endFlagFound:
+                self.decodedMessage += char
+        
+        print("Warning: never found an end flag when decoding a message")
+        return self.decodedMessage
+    
 '''TEST STRUCTURE'''
+#Get instance of serial communication singleton for testing
 test = SerialComm.Instance()
-#command = SerialCmd("MoveServo", "90,")
-test.ser.write(bytes("TEST123", 'ASCII'))
+
+test.ser.write(bytes("#move!5!50*", 'ASCII'))
+
+time.sleep(.5)
+response = str(test.ser.readline())
+print(response)
+#i = 5
+#===============================================================================
+# response = ''
+# while(i < 5):  
+#     temp = str(test.ser.readline())
+#     print(temp)
+#     if temp != '\r' or temp != '\n':  
+#         response += temp
+#     i = i + 1
+#     
+#===============================================================================
+#print(response)
+
+#Create test command for moving servo #1 90 degrees
+#disCommand = SerialCmd("Servo", ["1", "90"])
 #test.sendNextCmd()
-#print("Values in waiting on receive buffer: " + str(test.ser.inWaiting()))
-#test.flushOutputBuffer()
-#time.sleep(1)
+
+#Wait 50ms for Arduino to process
+#time.sleep(.05)
+
+#Get raw transmitted response from Arduino
+#rawResponse = test.read(disCommand)
+
+#Decode response to get single value out
+#actualResponse = disCommand.decodeResponse(rawResponse)
+
 test.cleanup
-
-
-
 
