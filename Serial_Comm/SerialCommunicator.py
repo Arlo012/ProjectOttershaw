@@ -54,8 +54,9 @@ class SerialComm:
         #Open serial connection to the Arduino, restarting it.
         #Setup parameters baud rate, and timeouts
         self.ser = Serial('/dev/ttyACM0', 115200, timeout = .5, writeTimeout = .5)
-        
+                
         #Need to sleep in order to give the Arduino time to boot up
+        print("Starting up the serial port -- Arduino will restart")
         time.sleep(3)
         
         #Queue of SerialCmd objects
@@ -195,11 +196,21 @@ class SerialCmd:
 #Get instance of serial communication singleton for testing
 test = SerialComm.Instance()
 
-test.ser.write(bytes("#move!5!50*", 'ASCII'))
+print("Sending read command")
+#test.ser.write(bytes('#move!1!180*', 'ASCII'))
+test.ser.write(bytes('#Read!2*', 'ASCII'))
 
 time.sleep(.5)
 response = str(test.ser.readline())
 print(response)
+
+response = str(test.ser.readline())
+print(response)
+
+response = str(test.ser.readline())
+print(response)
+
+
 #i = 5
 #===============================================================================
 # response = ''
