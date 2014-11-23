@@ -1,17 +1,21 @@
-import RPIO.PWM as PWM
 import time
 import math
+import SerialCommunicator
 
 class servo:
     '''A servo, and associated methods of controlling it'''
     
-    def __init__(self, myLocation, myPin, uniqueID):
+    uniqueID = 0
+    
+    def __init__(self, myLocation):
         self.location = str(myLocation)
         self.rotation = 0
-        self.pin = int(myPin)
-        self.ID = int(uniqueID)
+        self.ID = uniqueID
+        uniqueID += 1
         if not isSetup:
             PWMsetup()
+            
+        self.commInstance = SerialComm.Instance()
         
     def rotate(self, _angle):
         '''Rotate this servo by a given angle'''
@@ -20,10 +24,9 @@ class servo:
         try:
             if abs(angle) > 180:
                 raise Exception('Out of bounds servo rotation')
-            else: 
-                pwmAngle = int(1000 + (angle/180) * 1000)
-                print("PWM timer of " + str(pwmAngle))
-                PWM.add_channel_pulse(1, self.pin, 0, pwmAngle)
+            else:
+                self.commInstance
+
         except Exception as detail:
             print(detail)
             
@@ -43,23 +46,3 @@ class servo:
     def getID(self):
         return self.ID
     
-    
-# Static stuff below here, outside the class
-
-isSetup = False
-
-def PWMsetup():
-    '''Call me to setup servo channel at start of program'''
-    
-    #--------------------------------------------------
-    # set up PWM pulse increment to 1us
-    #--------------------------------------------------
-    PWM.setup(1)
-    PWM.init_channel(1, 20000)
-    isSetup = True
-    
-def PWMcleanup():
-    '''Call me at servo shutdown'''
-    PWM.clear_channel(1)
-    PWM.cleanup()
-    isSetup = False
