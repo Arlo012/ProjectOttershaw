@@ -50,12 +50,13 @@ class SerialComm:
     '''Serial communication singleton - NOT THREAD SAFE'''
     receivedDataID = 0
     
+    
     def __init__(self):
-        #Open serial connection to the Arduino, restarting it.
+        #Open serial connection to the Arduino, res115200tarting it.
         #Setup parameters baud rate, and timeouts
-        self.ser = Serial('/dev/ttyACM0', 115200, timeout = .5, writeTimeout = .5)
+        self.ser = Serial('/dev/ttyACM0', 9600, timeout = .5, writeTimeout = .5)
                 
-        #Need to sleep in order to give the Arduino time to boot up
+        #Need to sleep in order to give the Arduino tlistime to boot up
         print("Starting up the serial port -- Arduino will restart")
         time.sleep(3)
         
@@ -63,60 +64,85 @@ class SerialComm:
         self.commandQueue = queue.Queue()
         print("Serial communicator created")
         
-        #List of responses from serial comm
-        self.receivedList = []
+        #List of serial commands that haven't gotten a response yet
+        self.sentCommands = []
         print("Successfully initialized SerialComm")
     
     def cleanup(self):
         '''Cleanup at end of serial communication'''
         self.ser.close()
         
-    def read(self, command):
+    def read(self):
         '''
         Read in a command that was sent to the Arduino,
-        and then get the response and add to received list
-        on top of the existing command.
+        check its unique ID against a list of unique IDs
+        stored in the commandQueue, then decode
         '''
         
         #Read in serial value waiting on Arduino
-        self.received = self.ser.readline()
+        self.received = self.ser.readline().decode("ASCII")     #The b'....' in a string indicates it is byte coded. Here we decode it into ASCII
         #print("Received raw serial byte data: " + str(self.received))
         
         #Set the response value in the command class
-        command.response = self.received
+        if(len(self.received) > 0):
+            if(self.received[0] != "$"):
+                print("Invalid received serial response")
+                return ""
+            
+            #Parse the string into unique ID and return parameters
+            else:
+                self.parsedReceivedParameters = []
+                self.tempParameter = ""     #For iterating through chars
+                  
+                self.receivedIndex = 1     #Don't decode the '$'
+                #Loop through all characters in the received stream, parsing out all numbers
+                while(self.received[self.receivedIndex] != "*"):
+                    if(self.received[self.receivedIndex] != "!"):
+                        self.tempParameter += self.received[self.receivedIndex]
+                    else:
+                        self.parsedReceivedParameters.append(int(self.tempParameter))    #Note: must convert to integer here
+                        self.tempParameter = "" 
+                    self.receivedIndex += 1
+                    
+                self.parsedReceivedParameters.append(int(self.tempParameter))   #TODO this is hokey -- missed this temp inside the loop
+                
+                self.detectedID = self.parsedReceivedParameters[0]      #We can guarantee that the first parsed parameter will be the unique ID
+                
+                
+                #Now we know the detected ID, go checking through our list of sent commands to match this response to that ID
+                for command in self.sentCommands:
+                    if command.getUniqueID() == self.detectedID:
+                        # We have found which command sent out that request
+                        self.counter = 1    #Skip the unique ID in the array
+                        self.responseOnly = []  #Response from the arduino without the unique ID
+                        
+                        #print("Correctly formatted response from Arduino received:")
+                        while self.counter < len(self.parsedReceivedParameters):
+                            self.responseOnly = self.parsedReceivedParameters[self.counter]
+                            print(str(self.detectedID) + ", " + str(self.responseOnly))
+                            self.counter += 1
+                        command.setResponse(self.responseOnly)
+                        return
+                
+                #Went through every command in the sent list, didn't find this one
+                print("Warning: Arduino returned a unique ID not found in sent command list")
         
-        #Append the whole command to the received list (so command sent data can be used)
-        self.receivedList.append(command)
-    
     def sendNextCmd(self):
         '''Send the next command in the command queue over serial line'''
         if(self.commandQueue.qsize() > 0):
-            self.stringToSend = self.commandQueue.get().commandString
+            self.commandToSend = self.commandQueue.get()
+            self.stringToSend = self.commandToSend.commandString
             
-            print("Sending command: " + self.stringToSend)
+            #print("Sending command: " + self.stringToSend)
             self.ser.write(bytes(self.stringToSend, 'ASCII'))
             
-            #Read back the response from the arduino, append to the command
-            self.read(self.unparsedCommand)
+            self.sentCommands.append(self.commandToSend)
         else:
             print("No command to send over serial comm!")
         
     def addCmd(self, serialCmd):
         '''Add serial command to command queue'''
         self.commandQueue.put(serialCmd)
-        
-    def getResponse(self, ID):
-        '''Get the response to the command based on unique ID'''
-        
-        #FORGOT WHAT THIS DOES -- SHIT
-        for item in self.receivedList:
-            if item.ID == ID:
-                self.tempItem = item.response
-                self.receivedList.remove(item)
-                return self.tempItem
-            
-        print("Failed to find response item for provided ID: " + str(ID))
-        return "[No response]"
     
     def flushBuffers(self):
         '''Clear the serial buffers (in and out)'''
@@ -136,106 +162,86 @@ class SerialCmd:
     Data structure of commands to be sent to Arduino over serial
     Format follows:
     Prefix: #
-    Type (example): Servo
+    Type (example): move/read
     Separator: !
-    Param 1 (example): 1
+    Param 1 (Cmd ID): 1
     Separator: !
-    Param 2: 90
+    Param 2 (Servo/sensor ID): 10r
+    Separator: !
+    Param 3 (degrees): 90
     Suffix: *
     '''
-    responseID = 0
+    _responseID = 0      #Unique ID of command to be sent over the serial line 
 
-    def __init__(self, command, paramList):
+    def __init__(self, command, passedParamList):
         self.command = str(command)
         
-        #Comma separated value of parameters to send
-        self.paramList = str(paramList)
+        #Build integer list of parameters to pass
+        self.paramList = []
+        for param in passedParamList:
+            if type(param) is int:
+                self.paramList.append(param) 
+                
+        #Increment the global ID number for use in this command
+        SerialCmd._responseID += 1
+        
+        #Assign my unique ID as the current class-wide response ID value
+        self._ID = SerialCmd._responseID
         
         #Build string to send out over serial line
         self.commandString = "#"
         self.commandString += self.command
         self.commandString += "!"
-        self.commandString += self.paramList[0]
-        self.commandString += "!"
-        self.commandString += self.paramList[1]
+        self.commandString += str(self._ID) #this should include the command ID within the message
+        for param in self.paramList:
+            self.commandString += "!"
+            self.commandString += str(param)
         self.commandString += "*"
         
-        self.ID = self.responseID
-        self.responseID += 1
-        
         #Holder for response to serial command
-        self.response = []  
+        self.__response = []
+        self.__responseSet = False    #Flag to detect if anyone has set this response yet
         
-    def decodeResponse(self, rawResponse):
+    def getUniqueID(self):
+        return self._ID
+    
+    def setResponse(self, response):
+        '''Sets response from Arduino, and sets received flag to true'''
+        self._response = response
+        self._responseSet = True
+        
+    def getResponse(self):
         '''
-        Decode response from Arduino of following format:
-        Prefix: $
-        Message: "~whatever"
-        Suffix: *
+        Returns response to this command, if it has been set.
+        This response is set in the SerialComm read class when this command's unique ID is detected
         '''
-        #Flags for message processing
-        self.startFlagFound = False
-        self.messageFound = False
-        self.endFlagFound = False
-        
-        self.decodedMessage = ""
-        
-        for char in rawResponse:
-            if char is "$":
-                self.startFlagFound = True
-            elif char is "*":
-                self.endFlagFound = True
-                return self.decodedMessage
-            elif self.startFlagFound and not self.endFlagFound:
-                self.decodedMessage += char
-        
-        print("Warning: never found an end flag when decoding a message")
-        return self.decodedMessage
+        if not self.__responseSet:
+            print("Warning: no response has been set for this command yet.")
+            return ""
+        else:
+            return self.__response
     
 '''TEST STRUCTURE'''
 #Get instance of serial communication singleton for testing
 test = SerialComm.Instance()
 
-print("Sending read command")
-#test.ser.write(bytes('#move!1!180*', 'ASCII'))
-test.ser.write(bytes('#Read!2*', 'ASCII'))
-
-time.sleep(.5)
-response = str(test.ser.readline())
-print(response)
-
-response = str(test.ser.readline())
-print(response)
-
-response = str(test.ser.readline())
-print(response)
-
-
-#i = 5
-#===============================================================================
-# response = ''
-# while(i < 5):  
-#     temp = str(test.ser.readline())
-#     print(temp)
-#     if temp != '\r' or temp != '\n':  
-#         response += temp
-#     i = i + 1
-#     
-#===============================================================================
-#print(response)
-
 #Create test command for moving servo #1 90 degrees
-#disCommand = SerialCmd("Servo", ["1", "90"])
-#test.sendNextCmd()
+# disCommand = SerialCmd("read", [6])
+# disCommand2 = SerialCmd("read", [7])
+# test.addCmd(disCommand)
+# test.addCmd(disCommand2)
+# test.sendNextCmd()
+# time.sleep(.125)
+# test.sendNextCmd()
 
-#Wait 50ms for Arduino to process
-#time.sleep(.05)
-
-#Get raw transmitted response from Arduino
-#rawResponse = test.read(disCommand)
-
-#Decode response to get single value out
-#actualResponse = disCommand.decodeResponse(rawResponse)
+while True:
+    disCommand = SerialCmd("read", [6])
+    test.addCmd(disCommand)
+    test.sendNextCmd()
+    time.sleep(.01)      #Wait for Arduino to process
+    test.read()
 
 test.cleanup
 
+#test.ser.write(bytes('#move!1!180*', 'ASCII'))
+#test.ser.write(bytes('#Read!666!2*', 'ASCII'))
