@@ -45,6 +45,7 @@ dir = os.path.dirname(__file__)
 def callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
+#Gets a list of nodes to listen to from a text file (newline separated) and returns them
 def getNodes(filepath):
     with open(filepath) as f:
         content = f.read().splitlines()
