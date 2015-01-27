@@ -2,6 +2,58 @@
 #include <std_msgs/String.h>
 #include <Servo.h> 
   
+//Sensor classes here
+class SonicScan
+{
+  
+  private:
+    int _trigPin;
+    int _echoPin;
+    
+    void trigPulse(){
+      //Initialize the sensor by sending a pulse to the trig pin
+      //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
+      digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
+      delayMicroseconds(2);
+      digitalWrite(_trigPin,HIGH);
+      delayMicroseconds(5);
+      digitalWrite(_trigPin,LOW);
+    }
+    
+    long msToCm(long microseconds){
+      // The speed of sound is 340 m/s or 29 microseconds per centimeter.
+      // The ping travels out and back, so to find the distance of the
+      // object we take half of the distance travelled.
+      return microseconds / 29 / 2;
+    }
+    
+  public:
+    String sonicID;
+    
+    SonicScan(String sonic_ID, int trigPin, int echoPin){
+      pinMode(trigPin, OUTPUT);  //Trig pin initialized as output
+      pinMode(echoPin, INPUT);  //Echo pin initialized as input
+      sonicID = sonic_ID;  //Assigning the given ID to the class instance
+      _trigPin = trigPin;
+      _echoPin = echoPin;
+    }
+    
+    long sonicRead(){
+      trigPulse();
+      //Returns distance reading of ultrasonic sensor in centimeters. 
+      long duration, cm;
+      
+      //Duration in time from sending the ping to the reception of the echo off of an object
+      duration = pulseIn(_echoPin, HIGH);
+  
+      //Unit convertion from duration to distance in centimeters
+      cm = msToCm(duration);
+      
+      return cm;
+    }
+};
+
+//Begin main class declarat
 ros::NodeHandle nh;
 
 //Publisher
@@ -35,14 +87,12 @@ ros::Subscriber<std_msgs::String> sub("servo", &ServoRespond );
 //Use these values to cycle through sensors
 #define cycleSonar 100U   //TODO what is appropriate frequency for this check
 #define cycleGyro 275U    //TODO what is appropriate frequency for this check
-#define cycleAnalog 100U
-//Step polling rate here
+#define cycleAnalog 100U  //TODO more analog inputs per sensor
+
 
 unsigned long cycleSonarLastMillis = 0;
 unsigned long cycleGyroLastMillis = 0;
-unsigned long cycleAnalogLastMillis = 0;  //pointer for analog sensors
-//Step polling counter here
-
+unsigned long cycleAnalogLastMillis = 0;  //TODO more analog inputs per sensor
 
 //Checks if it is time to run an event by passing in last time completed, and unsigned refresh period
 boolean cycleCheck(unsigned long *lastMillis, unsigned int cycle) 
@@ -91,8 +141,12 @@ void loop()
   if(cycleCheck(&cycleSonarLastMillis, cycleSonar))
   {
    //Get sonar reading here
-   char sonarValue[5] = (int)sonicScan.sonicRead();    //Must return this as a character, or convert it here
-   str_msg.data = sonarValue;
+   int sonicInt = (int)sonicScan.sonicRead();    //Must return this as a character, or convert it here
+   char sonicCharValue[5] = {};
+   itoa(sonicInt,sonicCharValue, 10);    //Convert integer to character array
+   //TODO test this itoa
+   
+   str_msg.data = sonicCharValue;
    sonar.publish( &str_msg );
   }
  
@@ -108,8 +162,9 @@ void loop()
   {
     //Get analog reading here
     char buff [50];
-    String analogValues = readAnalogIns();
-    str_msg.data = analogValues.toCharArray(buff, 50);
+    String* analogValues = readAnalogIns();
+    analogValues->toCharArray(buff, 50);    //Function converts string value to character array in buff
+    str_msg.data = buff;                    //Set buff as output data
     analog.publish( &str_msg );
   }
   nh.spinOnce();
@@ -182,58 +237,8 @@ void PublishDebugMessage(String msg)
   debug.publish(&str_msg );
 }
 
-//TODO Ultrasonic code here
-class SonicScan
-{
-  
-  private:
-    int _trigPin;
-    int _echoPin;
-    
-    void trigPulse(){
-      //Initialize the sensor by sending a pulse to the trig pin
-      //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
-      digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
-      delayMicroseconds(2);
-      digitalWrite(_trigPin,HIGH);
-      delayMicroseconds(5);
-      digitalWrite(_trigPin,LOW);
-    }
-    
-    long msToCm(long microseconds){
-      // The speed of sound is 340 m/s or 29 microseconds per centimeter.
-      // The ping travels out and back, so to find the distance of the
-      // object we take half of the distance travelled.
-      return microseconds / 29 / 2;
-    }
-    
-  public:
-    String sonicID;
-    
-    SonicScan(String sonic_ID, int trigPin, int echoPin){
-      pinMode(trigPin, OUTPUT);  //Trig pin initialized as output
-      pinMode(echoPin, INPUT);  //Echo pin initialized as input
-      sonicID = sonic_ID;  //Assigning the given ID to the class instance
-      _trigPin = trigPin;
-      _echoPin = echoPin;
-    }
-    
-    long sonicRead(){
-      trigPulse();
-      //Returns distance reading of ultrasonic sensor in centimeters. 
-      long duration, cm;
-      
-      //Duration in time from sending the ping to the reception of the echo off of an object
-      duration = pulseIn(_echoPin, HIGH);
-  
-      //Unit convertion from duration to distance in centimeters
-      cm = msToCm(duration);
-      
-      return cm;
-    }
-};
-
-//TODO Analog code here
+//Analog read code
+//TODO is this code for resistance sensors?
 String* readAnalogIns()
 {
   //Reads all the analog inputs to check for values, 
@@ -246,21 +251,24 @@ String* readAnalogIns()
   
   //Collect all analog sensor values
   //and place them in a string comma separated
-  for(i=0; i < 7; i++)
+  for(int i = 0; i < 7; i++)
   {
     rawValue = analogRead(i);
     if(rawValue < 0 && rawValue > 32767)
     {
       resistanceVal = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
+      
+      //TODO you can't convert float to string like this
       analogResistances += resistanceVal + ","; //concatenate comma-separated resistances
+      
     }
-    delay(50) //Keep an eye out for this delay. Might give speed or reading problems later
+    delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
   }
   //remove extra comma at the end of string and add an end-of-string character for easier processing
-  analogResistances = analogResistances.substring(0, analogResistances.length()-1); 
-  analogResistances += "!"
+  analogResistances = analogResistances.substring(0, analogResistances.length() - 1); 
+  analogResistances += "!";
   
-  return analogResistances
+  return &analogResistances;    //Return reference
 }
 
 //TODO gyro code here
