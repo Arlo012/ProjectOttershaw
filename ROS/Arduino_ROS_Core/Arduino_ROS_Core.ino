@@ -237,25 +237,87 @@ void PublishDebugMessage(String msg)
   debug.publish(&str_msg );
 }
 
+<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
 //Analog read code
 //TODO is this code for resistance sensors?
 String* readAnalogIns()
+=======
+//TODO Ultrasonic code here
+class SonicScan
+{
+  
+  private:
+    int _trigPin;
+    int _echoPin;
+    
+    void trigPulse(){
+      //Initialize the sensor by sending a pulse to the trig pin
+      //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
+      digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
+      delayMicroseconds(2);
+      digitalWrite(_trigPin,HIGH);
+      delayMicroseconds(5);
+      digitalWrite(_trigPin,LOW);
+    }
+    
+    long msToCm(long microseconds){
+      // The speed of sound is 340 m/s or 29 microseconds per centimeter.
+      // The ping travels out and back, so to find the distance of the
+      // object we take half of the distance travelled.
+      return microseconds / 29 / 2;
+    }
+    
+  public:
+    String sonicID;
+    
+    SonicScan(String sonic_ID, int trigPin, int echoPin){
+      pinMode(trigPin, OUTPUT);  //Trig pin initialized as output
+      pinMode(echoPin, INPUT);  //Echo pin initialized as input
+      sonicID = sonic_ID;  //Assigning the given ID to the class instance
+      _trigPin = trigPin;
+      _echoPin = echoPin;
+    }
+    
+    long sonicRead(){
+      trigPulse();
+      //Returns distance reading of ultrasonic sensor in centimeters. 
+      long duration, cm;
+      
+      //Duration in time from sending the ping to the reception of the echo off of an object
+      duration = pulseIn(_echoPin, HIGH);
+  
+      //Unit convertion from duration to distance in centimeters
+      cm = msToCm(duration);
+      
+      return cm;
+    }
+};
+
+//TODO Analog code here
+int *readAnalogIns()
+>>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
 {
   //Reads all the analog inputs to check for values, 
   //concatenates resistances comma-separated,
   //and ignores inputs without sensors
   
+  int numOfSensors = 8  //Makes it easier to change throughout the code
   float rawValue = 0;
-  float resistanceVal = 0;
-  String analogResistances = "";
+  int analogResistances[numOfSensors];
+  
   
   //Collect all analog sensor values
   //and place them in a string comma separated
+<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
   for(int i = 0; i < 7; i++)
+=======
+  for(int i = 0; i < (numOfSensors - 1); i++)
+>>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
   {
     rawValue = analogRead(i);
-    if(rawValue < 0 && rawValue > 32767)
+    if(rawValue > 0 && rawValue < 32767)
     {
+<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
       resistanceVal = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
       
       //TODO you can't convert float to string like this
@@ -269,6 +331,15 @@ String* readAnalogIns()
   analogResistances += "!";
   
   return &analogResistances;    //Return reference
+=======
+      rawValue = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
+      analogResistances[i] = rawValue; //concatenate comma-separated resistances
+    }
+    delay(20); //Keep an eye out for this delay. We should test this delay
+  }
+  
+  return analogResistances;
+>>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
 }
 
 //TODO gyro code here
