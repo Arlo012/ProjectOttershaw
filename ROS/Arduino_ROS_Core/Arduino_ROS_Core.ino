@@ -1,7 +1,7 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <Servo.h> 
-  
+
 //Sensor classes here
 class SonicScan
 {
@@ -66,17 +66,18 @@ ros::Publisher analog("analog", &str_msg);     //keep publisher for analog inste
 //TODO 'step' publisher for step detection -- done
 ////////////////////////////
 
-//Subscriber (servo movement)
+  
+  Servo servos[24];
 void ServoRespond(const std_msgs::String& servoMsg)
 {
   //Parse servo message here, maybe just CSV in form of servo,direction
   String servoMsgString = servoMsg.data;    //Need to access the data within the servo message to modify
   String* csvParsedMessage = ParseCSV(servoMsgString, 2);    //2 values to separate: servo#, degreee
-  int servoToMove = csvParsedMessage[0].toInt();
-  int angleToMove = csvParsedMessage[1].toInt();
-  
-  //Lookup servo based on above
-  //ServoN.move(angleToMove)
+  int servoToMove = csvParsedMessage[0].toInt(); //This is the servo that needs to be moved
+  int angleToMove = csvParsedMessage[1].toInt(); //This is the angle desired for the servo 
+
+  servos[servoToMove].write(angleToMove);//This puts the desired servo at the right angle
+
 }
 
 ros::Subscriber<std_msgs::String> sub("servo", &ServoRespond );
@@ -112,7 +113,7 @@ boolean cycleCheck(unsigned long *lastMillis, unsigned int cycle)
 SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
 
 //Servo constants here
-Servo servo1;
+//Servo servo1;
 
 //Gyro code here
 
@@ -122,6 +123,7 @@ void setup()
   nh.advertise(sonar);
   nh.advertise(gyro);
   nh.advertise(debug);
+  nh.advertise(analog);
   
   nh.subscribe(sub);
   
@@ -131,8 +133,16 @@ void setup()
   digitalWrite(8, HIGH);  //VCC on pin 8
   
   //Servo setup
-  servo1.attach(5); //associate pin 8 with the control pin for one servo 
-  Serial.begin(9600);
+ // servo1.attach(5); //associate pin 8 with the control pin for one servo 
+ 
+ // servos[0].attach(0);
+ for (int cntr = 1; cntr<7;cntr++) // 5 should be 24, 5 is for testing son
+ {
+   servos[cntr].attach(cntr);
+         PublishDebugMessage("apple");
+
+ }
+  
 }
 
 void loop()
@@ -169,13 +179,16 @@ void loop()
   }
   nh.spinOnce();
   delay(10);
+  
+  
+  
 }
 
 
 //Parse comma separated string into string array
 //Input: comma separated string, how many comma separated values it contains
 //Return: string pointer (array of values) with commas separated out
-String* parsedArray = {};
+String* parsedArray = {0};
 String* ParseCSV(String toDelimit, int dataSize)
 {
   if(dataSize > 0)
@@ -237,91 +250,29 @@ void PublishDebugMessage(String msg)
   debug.publish(&str_msg );
 }
 
-<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
 //Analog read code
 //TODO is this code for resistance sensors?
 String* readAnalogIns()
-=======
-//TODO Ultrasonic code here
-class SonicScan
-{
-  
-  private:
-    int _trigPin;
-    int _echoPin;
-    
-    void trigPulse(){
-      //Initialize the sensor by sending a pulse to the trig pin
-      //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
-      digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
-      delayMicroseconds(2);
-      digitalWrite(_trigPin,HIGH);
-      delayMicroseconds(5);
-      digitalWrite(_trigPin,LOW);
-    }
-    
-    long msToCm(long microseconds){
-      // The speed of sound is 340 m/s or 29 microseconds per centimeter.
-      // The ping travels out and back, so to find the distance of the
-      // object we take half of the distance travelled.
-      return microseconds / 29 / 2;
-    }
-    
-  public:
-    String sonicID;
-    
-    SonicScan(String sonic_ID, int trigPin, int echoPin){
-      pinMode(trigPin, OUTPUT);  //Trig pin initialized as output
-      pinMode(echoPin, INPUT);  //Echo pin initialized as input
-      sonicID = sonic_ID;  //Assigning the given ID to the class instance
-      _trigPin = trigPin;
-      _echoPin = echoPin;
-    }
-    
-    long sonicRead(){
-      trigPulse();
-      //Returns distance reading of ultrasonic sensor in centimeters. 
-      long duration, cm;
-      
-      //Duration in time from sending the ping to the reception of the echo off of an object
-      duration = pulseIn(_echoPin, HIGH);
-  
-      //Unit convertion from duration to distance in centimeters
-      cm = msToCm(duration);
-      
-      return cm;
-    }
-};
-
-//TODO Analog code here
-int *readAnalogIns()
->>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
 {
   //Reads all the analog inputs to check for values, 
   //concatenates resistances comma-separated,
   //and ignores inputs without sensors
   
-  int numOfSensors = 8  //Makes it easier to change throughout the code
   float rawValue = 0;
-  int analogResistances[numOfSensors];
-  
+  float resistanceVal = 0;
+  String analogResistances = "";
   
   //Collect all analog sensor values
   //and place them in a string comma separated
-<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
   for(int i = 0; i < 7; i++)
-=======
-  for(int i = 0; i < (numOfSensors - 1); i++)
->>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
   {
     rawValue = analogRead(i);
-    if(rawValue > 0 && rawValue < 32767)
+    if(rawValue < 0 && rawValue > 32767)
     {
-<<<<<<< 720b00b40efe1e9a304a412e8baef1b6cb19c9e4
       resistanceVal = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
       
       //TODO you can't convert float to string like this
-      analogResistances += resistanceVal + ","; //concatenate comma-separated resistances
+      //analogResistances += resistanceVal + ","; //concatenate comma-separated resistances
       
     }
     delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
@@ -331,26 +282,19 @@ int *readAnalogIns()
   analogResistances += "!";
   
   return &analogResistances;    //Return reference
-=======
-      rawValue = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
-      analogResistances[i] = rawValue; //concatenate comma-separated resistances
-    }
-    delay(20); //Keep an eye out for this delay. We should test this delay
-  }
-  
-  return analogResistances;
->>>>>>> 667e66822c44e537191b996d9ae4bd78bd4ae545
 }
 
 //TODO gyro code here
 
 //TODO servo code (if any) here
 //Do we still need this function? or does ROS take care of indexing the servos
-void move_servo(int servo_index, int degree) 
+
+/*void move_servo(int servo_index, int degree) 
 {
     if(servo_index == 1)
     {
-     servo1.write(degree);//rotate servo a certain amount of degrees
+     servo1.write(degree);//rotate servo a certain amount of degrees//
     }
-}
+}*/
+
 

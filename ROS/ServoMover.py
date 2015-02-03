@@ -35,28 +35,31 @@
 
 ## Simple talker demo that published std_msgs/Strings messages
 ## to the 'chatter' topic
-
-import rospy
+import rospy #for ROS python implementation
+import sys # for our exit
 from std_msgs.msg import String
-#file to class in python, python init, create instance of class in some other function, us it to call init, one function in there called moveservo, 
+
+class ServoMover:
+
+	def __init__(self, pub =0, rate =0):#servoToMove, angleToMove):
+		self.pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
+    		rospy.init_node('talker', anonymous=True)
+   		self.rate = rospy.Rate(100) #Will certainly push through the values needed 
+
+	def MoveServo(self, data_str1):
+    		while not rospy.is_shutdown():
+        		rospy.loginfo(data_str1)#publishes our string
+        		self.pub.publish(String(data_str1))
+        		self.rate.sleep() #Makes sure that the servo is moved
+			sys.exit() #Will run through once, moving the servo to the desired angle and then exiting
 
 
-
-def talker():
-    pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
-    rospy.init_node('talker', anonymous=True)
-    rate = rospy.Rate(.1) # 
-
-    while not rospy.is_shutdown():
-
-	print("Enter desired Servo, movement: ") #Data prompt for the user
-	data_str = raw_input() #  Data should be input as "servo, angle"
-        rospy.loginfo(data_str)
-        pub.publish(String(data_str))
-        rate.sleep()
 
 if __name__ == '__main__':
     try:
-        talker()
+
+	data_str1 = raw_input("which servo/angle(servo,angle): ")
+	servomove=ServoMover()
+        servomove.MoveServo(data_str1)
     except rospy.ROSInterruptException:
         pass
