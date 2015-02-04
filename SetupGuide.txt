@@ -1,0 +1,77 @@
+Step-by-step guide to a fresh install of Raspian and the associated software for project Ottershaw on a Raspberry Pi.
+
+/---------------------------------/
+Installing Raspian (Raspberry Pi OS)
+
+I assume no access to an external monitor/ keyboard/ TV screen in this tutorial.
+
+Hardware Requirements:
+- Linux Laptop/Desktop
+- SD card reader
+- Raspberry Pi B / B+
+- SD card to fit Raspberry Pi
+- Internet connection
+- Access to router's administration page (home router, not on Stevens network)
+	|- If on managed network you'll need a personal router to set up a LAN
+
+1. Follow this guide (much more step-by-step, but very long):
+http://www.robertawood.com/blog/raspberry-pi/raspberry-pi-initial-setup-headless-no-monitor-or-keyboard-needed.html
+	|- dd will take awhile (its a byte by byte copy)
+	|- Alternatively, you can use the GUI imaging tool inside Ubuntu (it works very well)
+	1.1 Make sure to expand the file system at the end in the last step!
+
+//Todo attach wpa_supplicant file
+2. Once installed and connected to wifi (see attached wpa_supplicant.conf file) run (via ssh):
+	
+	sudo apt-get update
+	sudo apt-get upgrade
+
+
+
+/---------------------------------/
+Setting up Git
+
+
+
+/---------------------------------/
+Setting up Slack integration
+1. Install pip (for downloading python packages) 
+	sudo apt-get install python-pip
+	sudo cd pip install slacker
+
+2. Change host name of raspberry pi (network identifier of the Pi)
+	2.1 'sudo nano /etc/hosts' and change the 127.0.1.1 hostname
+	2.2 'sudo nano /etc/hostname' and change to the same hostname
+	2.3 'sudo /etc/init.d/hostname.sh'to commit changes
+	2.4 reboot
+
+3. Place pi_slackip_notify.py in raspberry pi home directory
+	//TODO attach this file
+
+4. Modify the bootup script to run pi_slackip_notify.py
+	4.1 'sudo nano /etc/rc.local'
+	4.2 Place the following two lines immediately after the file's beginning comments:
+		sleep 10
+		python /home/pi/pi_slackIP_notify.py 
+	4.3 Exit the file
+	4.4 run 'sudo chmod +x /etc/rc.local' to make the script execute on boot
+	4.5 Reboot, check if it integrated with Slack
+
+NOTE: Unique keys in the pi_slackip_notify.py will need to be modified per Slack account
+
+/---------------------------------/
+Installing ROS (Indigo at the time of this writing)
+Primary: http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi
+Comments for help: http://answers.ros.org/question/192250/raspberry-pi-with-ros-indigo-or-any-new-release-of-ros/
+
+1) Follow http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi
+2) Run all of step 1 of the tutorial in sudo su replacing 'wheezy main' with 'utopic main'
+3) If wstool in step 2.1 fails, re-enter sudo su and run 'curl https://bootstrap.pypa.io/ez_setup.py | python' to re-install broken setup-tools on raspian install (see: http://stackoverflow.com/questions/7446187/no-module-named-pkg-resources)
+	Note 1: This step is actually a bitch. Don't get frustrated -- just keep working at it.	
+	Note 2: You'll probably need to start this whole section over from the beginning if this failed. Also consider trying sudo apt-get autoclean before starting over to remove incomplete packages.
+4) Carefully run the section 2.2 resolve dependencies (or else things gun break)
+
+
+
+
+
