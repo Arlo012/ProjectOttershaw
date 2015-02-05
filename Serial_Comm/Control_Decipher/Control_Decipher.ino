@@ -1,11 +1,11 @@
 /*possible way to get it working with 115200 baud rate*/
 //TODO: research use of coroutines here: http://discuss.littlebits.cc/t/coroutine-library/1170
 
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-#define DEFAULTBAUDRATE 115200          // Defines The Default Serial Baud Rate (This must match the baud rate specifid in LabVIEW)
-#else
-#define DEFAULTBAUDRATE 115200
-#endif
+//#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+//#define DEFAULTBAUDRATE 115200          // Defines The Default Serial Baud Rate (This must match the baud rate specifid in LabVIEW)
+//#else
+//#define DEFAULTBAUDRATE 115200
+//#endif
 
 #include <Servo.h> 
 #include "Arduino.h"
@@ -73,150 +73,175 @@ class SonicScan
     }
 };
 
-//Test sonic scanner
-SonicScan sonicScan("sonicScan",3,4);
+SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
+Servo servo1;
 
-//Test servo
-Servo servo1;    
-
-//TODO need to label which of these writes & pinmodes are for what -- I can't tell what part is the ultrasonic, LED, etc 11/23/14
-//TODO can this be declared at the program start? Feels weird to be buried inside here, but I guess it isn't hurting anything...
 void setup()
 {
-  pinMode(2,OUTPUT); //attach pin 2 to vcc
-  pinMode(5,OUTPUT);  //attach pin 5 GND
-  digitalWrite(2, HIGH);
-  servo1.attach(8); 
+  pinMode(8,OUTPUT); //attach pin 8 to vcc
+  pinMode(11,OUTPUT);  //attach pin 11 GND
+  digitalWrite(8, HIGH);  //VCC on pin 8
+  
+  servo1.attach(5); //associate pin 8 with the control pin for one servo 
   Serial.begin(9600);
-  //Serial.flush();
-  pinMode(12, OUTPUT);
-  pinMode(6, OUTPUT);
+  
+  //LED TESTING
+  pinMode(12, OUTPUT);//test led pins set to output (you can ignore this if you want)
+  pinMode(6, OUTPUT);//test led pins set to output (you can ignore this if you want)
 }
 
-char a;          //TODO: label me! Why is this declared out here but char input inside the main loop?
-
-//TODO is text string needed? I see a text passed into the decipher(String text) function, but is this being read anywhere?
-String text;    //Received text from serial line
-String param;   //Stores parameter sent in with command (holds numbers from passed serial string)
-int p[2];       //Integer parameters (integer converted version of param)
-
-//Move the provided servo the given number of 'degree's
-//TODO label me. Why are we using servo_index? Thought we wanted a unique ID for each servo?
-void move_servo(int servo_index, int degree)
-{
-  //TODO what is servo_index?
-  if(servo_index == 1)
+  //TODO why are these sitting in the middle of two functions? Move to proper place
+  char serial_character_grabber; //varliable that pullsr the data from serial character by character
+  String text;    //Received text from serial line
+  String param;   //Stores parameter sent in with command (holds numbers from passed serial string)
+  int p[2];       //Integer parameters (integer converted version of param)
+  int command_parameter[3]; //Stores three integer parameters: command id, servo/sensor id, degrees/optional (adding cmndID)
+  void move_servo(int servo_index, int degree) //simple test function to test servo response form raspberry pi
   {
-   servo1.write(degree);
+    if(servo_index == 1)
+    {
+     servo1.write(degree);//rotate servo a certain amount of degrees
+    }
   }
-}
-
+  
 //Takes input text and determines what kind of command it is, then responds appropriately.
 //For example: if read is passed in, the values in p[] are interpreted as which sensor to poll
 void decipher(String text)
 {
-   if(text=="move")
+   if(text=="move")            //if the raspberry pi commands a servo to move  
    {
-     //move_servo(p[0], p[1]);
-      Serial.println(text);
-      Serial.println(p[0], DEC);
-      Serial.println(p[1], DEC);
-      delay(100);
-      digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level)
-      delay(1000);               // wait for a second
-      digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW
-      delay(1000);
+     move_servo(command_parameter[0], command_parameter[1]); // function call to move servo specified by command_parameter[1], 
+                                                               //a certain number of degrees specified my command_parameter[2]
+     // Serial.println(text);                                                    //[debuging purposes, please ignore]
+     // Serial.println(command_parameter[0], DEC);  //return the servo ID        //[debuging purposes, please ignore]
+     // Serial.println(command_parameter[1], DEC);  //return the amunt rotated   //[debuging purposes, please ignore]
+     // delay(100);                                                              //[debuging purposes, please ignore]
+     // digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level) //[debuging purposes, please ignore]
+     // delay(1000);               // wait for a second                          //[debuging purposes, please ignore]
+     // digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW  //[debuging purposes, please ignore]
+     //delay(1000);                                                              //[debuging purposes, please ignore]
    }
    
-   else if(text == "Read")
+   else if(text == "read")                                   // if the raspbery pi requests a sensor value
    {
-      //Serial.println(text);
-      //Serial.println(p[0]);
-      int ping_read = (int)sonicScan.sonicRead();
-      Serial.println(ping_read);
-      delay(100);
-      digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level)
-      delay(1000);               // wait for a second
-      digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW
-      delay(1000); 
+      //this section of code will be in use when there are multiple sensors implemented
+      /*
+          switch (p[1])                                      // check the id of the sensor that we wish to read a value from
+          {
+            //Serial.println(text);                          //[debuging purposes, please ignore]
+              case 1:                                        //for example if we want the ultrasonlic sensor to return a 
+                                                             //measured distance to the raspbaerry pi p[1] will hold the id for it
+                int ping_read = (int)sonicScan.sonicRead();  //call sensor ID 1 function
+                Serial.println(ping_read);                   //return its value
+              break;
+              
+              case 2:
+                //call sensor ID 2 function
+                //return its value
+              break;
+   
+              case 3:
+                //call sensor ID 3 function
+                //return its value 
+              break;
+               
+            default: 
+            Serial.println("No Such Sensor");     //default error message to raspbery pi if no such sensor of the specified id 
+                                                  //exists
+          }
+      */
+      
+      //Response to the Raspberry Pi
+      String responseToPi = "";
+      responseToPi += "$";
+      responseToPi += command_parameter[0];       // unique ID that the Raspberry Pi generated, the arduino will send back
+      responseToPi += "!";
+      
+      //TODO generalize this to work for other sensor types, e.g. gyro?      Serial.println(sonicScan.sonicRead());
+      int ping_read = (int)sonicScan.sonicRead(); // read the sensor
+      responseToPi += String(ping_read);
+      responseToPi += "*";
+      
+      Serial.println(responseToPi);                  // return measured value
    }
    
    else
-   {
-     Serial.println("invalid input");
+   { 
+     Serial.println("invalid input"); //if there was an issue with the command (such as currupted data stream, or call to a non existant sensor/servo)
      delay(100);
-     digitalWrite(6, HIGH);   // turn the LED on (HIGH is the voltage level)
-     delay(1000);             // wait for a second
-     digitalWrite(6, LOW);    // turn the LED off by making the voltage LOW
+     digitalWrite(6, HIGH);                     // turn the LED on (HIGH is the voltage level)
+     delay(1000);                               // wait for a second
+     digitalWrite(6, LOW);                      // turn the LED off by making the voltage LOW
      delay(1000); 
    }
 }
-
-//This loop is hard for me to follow -- can you please document what's going on here so we can debug & expand later?
+/* sample inputs 
+#move!2!180*
+#move!8!88*
+#move!8!88*#Read!34*#move!2!180*
+move!2!180*
+#move2180*
+#move!2!180*#move!8!88*
+*/
 void loop()
 {
   while(Serial.available())
   {
-    int tag=-1;  //TODO: label tag
+    //String param;
+    int tag = -1;
+    char input = (char)Serial.read();  //grabs first character from serial
     
-    //Read serial stream byte, cast to character
-    char input = (char)Serial.read();
-    
-    //Check for stream begin character
-    if(input=='#')
+    if(input=='#')                     //checks if its the start of a new command
     {
       delay(100);
-      //TODO we need a better variable name here than 'a'
-      a = (char)Serial.read();
-      
-      //Continue looping through serial stream until end character found
-      //TODO what if the end character is lost and we get something like #move!1!50#read!2!!* ?
-      while(a != '*')
+      serial_character_grabber = (char)Serial.read();         // grab next character fraom serial
+      //Serial.println(serial_character_grabber);
+      //TODO timeout if * never reached
+      while(serial_character_grabber != '*')                  // as long as we are not signaled that it is the end of a command
       {
-        if(a != '!')
+        if(serial_character_grabber != '!')                   //if it is not the end of a parameter 
         {
-           if (isDigit(a)) 
+           if (isDigit(serial_character_grabber))             //if it is a digit (signifying, a sensor id, or degree amount that a servo should rotate)
            {
-          //Serial.println(commandbuffer[index]);
-          
-          //This character is a digit; append it to the current 
-           param.concat(a);
-          //Serial.println(param);
+            //Serial.println(commandbuffer[index]);   //[debuging purposes, please ignore]
+             param.concat(serial_character_grabber);                         //conacatonate the value to a "param" variable
+            //Serial.println(param);                  //[debuging purposes, please ignore]
            }  
-           else
+           else                                     //else if what we've pulled from serial is not a digit (or implicitly a '!', '#', or '*')
            {
-             //Serial.println(a);
-             text += a;
-             //Serial.println(text);
+             //Serial.println(a);                   //[debuging purposes, please ignore]
+             text += serial_character_grabber;      //the character pulled from serial must be text possibly specifying a "read" or "move" command 
+                                                    //so append the character to the other characters in the "text" variable
+             //Serial.println(text);                //[debuging purposes, please ignore]
            }
         }
         
-        else
+        else                                         //if a separating '!' cahracter was found signifying another parameter (most likely an integer for servo movement or sensor identification ) 
         {
-           tag++;
-           param = "";
+           command_parameter[tag]=param.toInt();     //convert the parameter (String) to and interger
+           tag++;                                    // increment tag index for the array holding the parameters
+           param = "";                               // empty the parameter string to make room for the next incomming parameter
         }
-        
-        p[tag]=param.toInt();
-        a = (char)Serial.read();
+        //command_parameter[tag]=param.toInt();                      //convert the parameter (String) to and interger
+        serial_character_grabber = (char)Serial.read();              // readin the next value from serial
       }
-        decipher(text);
-        text = "";
+                                                      //when the end command character has been detected 
+        decipher(text);                               // call the decipher function
+        text = "";                                    //empty out the "text" 
         //param =""
     }
       
-    else 
+    else                                             // else if the starting character is NOT '#' which means that there was some error in the command sent from the raspberry pi
       {
-        text ="";
-        while (Serial.available() > 0)
+        text ="";                                   //empty out the "text variable" signifying an error in the decipher function 
+        while (Serial.available() > 0)              //if there are still values in the serial buffer
         {
-          Serial.read();
+          Serial.read();                            //clear the serial buffer of all queued commands
         }
-        decipher(text);
-        //Serial.flush();
-        //break;
+        decipher(text);                             // call the decipher function ehich will output an error message
+        //Serial.flush();                           //[debuging purposes, please ignore]
+        //break;                                    //[debuging purposes, please ignore]
       }
-
   }
 }
 
