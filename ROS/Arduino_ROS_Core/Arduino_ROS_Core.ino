@@ -1,3 +1,6 @@
+#include <Wire.h>
+#include <LSM303.h>
+#include <L3G.h>
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <Servo.h> 
@@ -116,6 +119,7 @@ SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to
 //Servo servo1;
 
 //Gyro code here
+L3G gyro1;
 
 void setup()
 { 
@@ -131,6 +135,18 @@ void setup()
   pinMode(8,OUTPUT); //attach pin 8 to vcc
   pinMode(11,OUTPUT);  //attach pin 11 GND
   digitalWrite(8, HIGH);  //VCC on pin 8
+  
+  //Gyro sensor setup
+  //Serial.begin(9600);
+  Wire.begin();
+  
+//  if (!gyro1.init())
+//  {
+//    //Serial.println("Failed to autodetect gyro type!");
+//    while (1);
+//  }
+  
+  gyro1.enableDefault();
   
   //Servo setup
  // servo1.attach(5); //associate pin 8 with the control pin for one servo 
@@ -163,9 +179,32 @@ void loop()
   if(cycleCheck(&cycleGyroLastMillis, cycleGyro))
   {
    //Get gyro reading here
-   char gyroValue[9] = "10,1,5,0";    //TODO decimals are going to be a problem here
-   str_msg.data = gyroValue;
+   char gyroXVal[5] = {};
+   char gyroYVal[5] = {};
+   char gyroZVal[5] = {};
+   itoa(gyro1.g.x, gyroXVal,10);
+   itoa(gyro1.g.y, gyroYVal,10);
+   itoa(gyro1.g.z, gyroZVal,10);
+   str_msg.data = gyroXVal;
    gyro.publish( &str_msg );
+   
+   str_msg.data = gyroYVal;
+   gyro.publish( &str_msg );
+   
+   str_msg.data = gyroZVal;
+   gyro.publish( &str_msg );
+   
+   char gyroValue[25] = {};  //TODO Change to publish angles instead of raw data
+   for(int i=0; i<5;i++)
+   {
+     //Write all three gyro values within the same for loop
+     //by allocating space in the char array
+     //gyroValue[i] = gyroXVal[i];
+     //gyroValue[i+5] = gyroYVal[i+5];
+     //gyroValue[i+10] = gyroZVal[i+10];
+   }
+   //str_msg.data = gyroValue;
+   //gyro.publish( &str_msg );
   }
   
   if(cycleCheck(&cycleAnalogLastMillis, cycleAnalog))
