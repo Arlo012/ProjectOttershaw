@@ -4,67 +4,17 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <Servo.h> 
-
-//Sensor classes here
-class SonicScan
-{
-  
-  private:
-    int _trigPin;
-    int _echoPin;
-    
-    void trigPulse(){
-      //Initialize the sensor by sending a pulse to the trig pin
-      //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
-      digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
-      delayMicroseconds(2);
-      digitalWrite(_trigPin,HIGH);
-      delayMicroseconds(5);
-      digitalWrite(_trigPin,LOW);
-    }
-    
-    long msToCm(long microseconds){
-      // The speed of sound is 340 m/s or 29 microseconds per centimeter.
-      // The ping travels out and back, so to find the distance of the
-      // object we take half of the distance travelled.
-      return microseconds / 29 / 2;
-    }
-    
-  public:
-    String sonicID;
-    
-    SonicScan(String sonic_ID, int trigPin, int echoPin){
-      pinMode(trigPin, OUTPUT);  //Trig pin initialized as output
-      pinMode(echoPin, INPUT);  //Echo pin initialized as input
-      sonicID = sonic_ID;  //Assigning the given ID to the class instance
-      _trigPin = trigPin;
-      _echoPin = echoPin;
-    }
-    
-    long sonicRead(){
-      trigPulse();
-      //Returns distance reading of ultrasonic sensor in centimeters. 
-      long duration, cm;
-      
-      //Duration in time from sending the ping to the reception of the echo off of an object
-      duration = pulseIn(_echoPin, HIGH);
-  
-      //Unit convertion from duration to distance in centimeters
-      cm = msToCm(duration);
-      
-      return cm;
-    }
-};
+#include <SonicScan.h>
 
 //Begin main class declarat
 ros::NodeHandle nh;
 
 //Publisher
 std_msgs::String str_msg;    //TODO can we keep this same variable for all published messages?
-ros::Publisher sonar("sonar", &str_msg);
-ros::Publisher gyro("gyro", &str_msg);
-ros::Publisher debug("ArduinoDebug", &str_msg);
-ros::Publisher analog("analog", &str_msg);     //keep publisher for analog instead of step detection? 
+//ros::Publisher sonar("sonar", &str_msg);
+//ros::Publisher gyro("gyro", &str_msg);
+//ros::Publisher debug("ArduinoDebug", &str_msg);
+//ros::Publisher analog("analog", &str_msg);     //keep publisher for analog instead of step detection? 
                                               //only one analog type of analog sensor for now.
 //TODO 'step' publisher for step detection -- done
 ////////////////////////////
@@ -112,57 +62,39 @@ boolean cycleCheck(unsigned long *lastMillis, unsigned int cycle)
 }
 //////////////////////
 
-//Ultrasonic declarations here
-SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
-
 //Servo constants here
 //Servo servo1;
 
-//Gyro code here
-L3G gyro1;
 
 void setup()
 { 
-  nh.initNode();
-  nh.advertise(sonar);
-  nh.advertise(gyro);
-  nh.advertise(debug);
-  nh.advertise(analog);
+  //nh.initNode();
+  //nh.advertise(sonar);
+  //nh.advertise(gyro);
+  //nh.advertise(debug);
+  //nh.advertise(analog);
   
-  nh.subscribe(sub);
+  //nh.subscribe(sub);
   
-  //Ultrasonic sensor setup
-  pinMode(8,OUTPUT); //attach pin 8 to vcc
-  pinMode(11,OUTPUT);  //attach pin 11 GND
-  digitalWrite(8, HIGH);  //VCC on pin 8
-  
-  //Gyro sensor setup
-  //Serial.begin(9600);
-  Wire.begin();
-  
-//  if (!gyro1.init())
-//  {
-//    //Serial.println("Failed to autodetect gyro type!");
-//    while (1);
-//  }
-  
-  gyro1.enableDefault();
+
   
   //Servo setup
  // servo1.attach(5); //associate pin 8 with the control pin for one servo 
  
  // servos[0].attach(0);
+ /*
  for (int cntr = 1; cntr<7;cntr++) // 5 should be 24, 5 is for testing son
  {
    servos[cntr].attach(cntr);
          PublishDebugMessage("apple");
 
- }
+ }*/
   
 }
 
 void loop()
 {
+  /*
   //Begin round robin sensor polling
   if(cycleCheck(&cycleSonarLastMillis, cycleSonar))
   {
@@ -178,33 +110,7 @@ void loop()
  
   if(cycleCheck(&cycleGyroLastMillis, cycleGyro))
   {
-   //Get gyro reading here
-   char gyroXVal[5] = {};
-   char gyroYVal[5] = {};
-   char gyroZVal[5] = {};
-   itoa(gyro1.g.x, gyroXVal,10);
-   itoa(gyro1.g.y, gyroYVal,10);
-   itoa(gyro1.g.z, gyroZVal,10);
-   str_msg.data = gyroXVal;
-   gyro.publish( &str_msg );
-   
-   str_msg.data = gyroYVal;
-   gyro.publish( &str_msg );
-   
-   str_msg.data = gyroZVal;
-   gyro.publish( &str_msg );
-   
-   char gyroValue[25] = {};  //TODO Change to publish angles instead of raw data
-   for(int i=0; i<5;i++)
-   {
-     //Write all three gyro values within the same for loop
-     //by allocating space in the char array
-     //gyroValue[i] = gyroXVal[i];
-     //gyroValue[i+5] = gyroYVal[i+5];
-     //gyroValue[i+10] = gyroZVal[i+10];
-   }
-   //str_msg.data = gyroValue;
-   //gyro.publish( &str_msg );
+ 
   }
   
   if(cycleCheck(&cycleAnalogLastMillis, cycleAnalog))
@@ -215,9 +121,10 @@ void loop()
     analogValues->toCharArray(buff, 50);    //Function converts string value to character array in buff
     str_msg.data = buff;                    //Set buff as output data
     analog.publish( &str_msg );
-  }
-  nh.spinOnce();
-  delay(10);
+  }*/
+ 
+  //nh.spinOnce();
+  delay(100);
   
   
   
@@ -286,54 +193,10 @@ void PublishDebugMessage(String msg)
   msg.toCharArray(buffer, 40);    //Puts string into character buffer
   
   str_msg.data = buffer;         //Places character buffer into str message to send over publisher
-  debug.publish(&str_msg );
+  
+  //RE-enable me once ROS working
+  //debug.publish(&str_msg );
 }
 
-//Analog read code
-//TODO is this code for resistance sensors?
-String* readAnalogIns()
-{
-  //Reads all the analog inputs to check for values, 
-  //concatenates resistances comma-separated,
-  //and ignores inputs without sensors
-  
-  float rawValue = 0;
-  float resistanceVal = 0;
-  String analogResistances = "";
-  
-  //Collect all analog sensor values
-  //and place them in a string comma separated
-  for(int i = 0; i < 7; i++)
-  {
-    rawValue = analogRead(i);
-    if(rawValue < 0 && rawValue > 32767)
-    {
-      resistanceVal = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
-      
-      //TODO you can't convert float to string like this
-      //analogResistances += resistanceVal + ","; //concatenate comma-separated resistances
-      
-    }
-    delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
-  }
-  //remove extra comma at the end of string and add an end-of-string character for easier processing
-  analogResistances = analogResistances.substring(0, analogResistances.length() - 1); 
-  analogResistances += "!";
-  
-  return &analogResistances;    //Return reference
-}
-
-//TODO gyro code here
-
-//TODO servo code (if any) here
-//Do we still need this function? or does ROS take care of indexing the servos
-
-/*void move_servo(int servo_index, int degree) 
-{
-    if(servo_index == 1)
-    {
-     servo1.write(degree);//rotate servo a certain amount of degrees//
-    }
-}*/
 
 
