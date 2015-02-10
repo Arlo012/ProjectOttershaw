@@ -1,0 +1,20 @@
+#######################################
+# Syntax Coloring Map SonicScan
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SonicScan	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+trigPulse	KEYWORD2
+getPins		KEYWORD2
+sonicRead	KEYWORD2
+printResults	KEYWORD2
+#######################################
+# Constants (LITERAL1)
+#######################################
