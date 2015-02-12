@@ -1,3 +1,8 @@
+/*
+Helper functions for the ARDUINO_ROS_Core module
+*/
+
+
 //Parse comma separated string into string array
 //Input: comma separated string, how many comma separated values it contains
 //Return: string pointer (array of values) with commas separated out

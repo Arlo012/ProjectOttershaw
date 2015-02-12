@@ -6,48 +6,19 @@
   #include <L3G.h>
   
 //Initialization code
-
-L3G gyro1; //Gyro declarations here
-
-void Initialize_Sensors()
+void SetupAllSensors()
 {
-  //Ultrasonic declarations here
+  //Todo need to get an object back somehow
+  GyroSetup();          //See MiniMU9AHRS.ino
+  
+  //Ultrasonic
   SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
 
   //Analog declarations here
-  //No need to instantiate analog sensors
+  //No need to instantiate analog sensors 
 }
-
-//Setup code - Function called in the Setup loop of the .ino file
-
-void Ultrasonic_Setup(int vccPin, int gndPin)
-{
-  //Ultrasonic sensor setup
-  pinMode(vccPin,OUTPUT); //attach pin to vcc
-  pinMode(gndPin,OUTPUT);  //attach pin GND
-  digitalWrite(vccPin, HIGH);  //VCC on pin
-}
-
-void Gyro_Setup()
-{
-  //Gyro sensor setup
-  //Serial.begin(9600);<--- Uncomment for debug purposes only. Only one serial line at a time; thus, it conflicts with ROS serial line
-  
-  Wire.begin();
-
-  if (!gyro1.init())
-  {
-    //Serial.println("Failed to autodetect gyro type!"); <-- Uncomment for debug only
-    while (1);  //Stops code from running if gyro is not properly initialized
-  }
-
-  gyro1.enableDefault();
-}
-
-//Interfacing the analog pins on the arduino board does not require any special setup
 
 //Data collection and processing functions  
-
 String readGyroValues()
 {
   //Get gyro reading here
@@ -62,9 +33,9 @@ String readGyroValues()
   char gyroZVal[5] = {};
   
   //Convert values to char arrays
-  itoa((int)gyro1.g.x, gyroXVal,10);
-  itoa((int)gyro1.g.y, gyroYVal,10);
-  itoa((int)gyro1.g.z, gyroZVal,10);
+  itoa((int)ToDeg(roll), gyroXVal,10);
+  itoa((int)ToDeg(pitch), gyroYVal,10);
+  itoa((int)ToDeg(yaw), gyroZVal,10);
 
   char gyroValue[25] = {};  //TODO Change to publish angles instead of raw data
   for(int i=0; i<5;i++)
@@ -111,3 +82,9 @@ String readAnalogIns()
   return analogResistances;    //Return reference
 }
 
+String readSonicScanner()
+{
+  String toReturn;
+  //TODO implement me (probably just a wrapper around sonic scanner library)
+  return toReturn;
+}
