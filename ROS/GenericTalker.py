@@ -33,44 +33,35 @@
 #
 # Revision $Id$
 
-## Simple talker demo that listens to std_msgs/Strings published 
+## Simple talker demo that published std_msgs/Strings messages
 ## to the 'chatter' topic
 
 import rospy
-import os
 from std_msgs.msg import String
+#file to class in python, python init, create instance of class in some other function, us it to call init, one function in there called moveservo, 
 
-dir = os.path.dirname(__file__)
 
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+def talker():
+    pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
+    rospy.init_node('talker', anonymous=True)
+    rate = rospy.Rate(10) #Frequency of 10hz
 
-#Gets a list of nodes to listen to from a text file (newline separated) and returns them
-def getNodes(filepath):
-    with open(filepath) as f:
-        content = f.read().splitlines()
+    while not rospy.is_shutdown():
+        # Do algorithms here
         
-    return content
-
-def listener():
-
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # node are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'talker' node so that multiple talkers can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
-
-
-    #Subscribe to provided text file topics
-    topics = getNodes(os.path.join(dir,'subscribe.txt'))
-    for topic in topics:
-        print "Python core subscribed to topic " + topic
-        rospy.Subscriber(topic, String, callback)
-
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+        #Task 1
+        stringToSend = "I am talking to the listener"
+        pub.publish(stringToSend)
+        
+        #Task 2
+        #Service -- TBD. Need to first merge catkin workspace to git directory
+        
+        #Task 3
+        
+        rate.sleep()
 
 if __name__ == '__main__':
-    listener()
-
+    try:
+        talker()
+    except rospy.ROSInterruptException:
+        pass
