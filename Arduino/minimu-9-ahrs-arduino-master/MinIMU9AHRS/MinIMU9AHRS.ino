@@ -150,14 +150,14 @@ float Temporary_Matrix[3][3]={
     0,0,0  }
 };
  
-void GyroSetup()
+void setup()
 { 
-  //Serial.begin(115200);
+  Serial.begin(115200);
   pinMode (STATUS_LED,OUTPUT);  // Status LED
   
   I2C_Init();
 
-  //Serial.println("Pololu MinIMU-9 + Arduino AHRS");
+  Serial.println("Pololu MinIMU-9 + Arduino AHRS");
 
   digitalWrite(STATUS_LED,LOW);
   delay(1500);
@@ -183,10 +183,9 @@ void GyroSetup()
   AN_OFFSET[5]-=GRAVITY*SENSOR_SIGN[5];
   
   //Serial.println("Offset:");
-  //for(int y=0; y<6; y++)
-  //  Serial.println(AN_OFFSET[y]);
+  for(int y=0; y<6; y++)
+    Serial.println(AN_OFFSET[y]);
   
-  //TODO this delay is really long
   delay(2000);
   digitalWrite(STATUS_LED,HIGH);
     
@@ -195,7 +194,7 @@ void GyroSetup()
   counter=0;
 }
 
-void GyroLoop() //Main Loop
+void loop() //Main Loop
 {
   if((millis()-timer)>=20)  // Main loop runs at 50Hz
   {
@@ -225,6 +224,8 @@ void GyroLoop() //Main Loop
     Drift_correction();
     Euler_angles();
     // ***
+   
+    printdata();
   }
    
 }

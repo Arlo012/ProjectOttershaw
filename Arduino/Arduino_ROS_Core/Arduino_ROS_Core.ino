@@ -1,7 +1,8 @@
+#include <MemoryFree.h>
 #include <ros.h>
 #include <std_msgs/String.h>
 
-//Begin main class declarat
+//Begin main class declaration
 ros::NodeHandle nh;
 
 //Publisher
@@ -15,19 +16,10 @@ ros::Publisher analog("analog", &str_msg);     //keep publisher for analog inste
 //TODO
 //ros::Subscriber<std_msgs::String> sub("servo", &ServoRespond );
 
-//'Round robin' cycler (for polling sensors)
-//Use these values to cycle through sensors
-#define cycleSonar 100U   //TODO what is appropriate frequency for this check
-#define cycleGyro 275U    //TODO what is appropriate frequency for this check
-#define cycleAnalog 100U  //TODO more analog inputs per sensor
-
-unsigned long cycleSonarLastMillis = 0;
-unsigned long cycleGyroLastMillis = 0;
-unsigned long cycleAnalogLastMillis = 0;  //TODO more analog inputs per sensor
-
 //String values returned from read functions
 String gyroVal;
 String analogVal;
+String sonarVal;
 char sensorBuffer[50];      //Holds string to chararray conversion
 
 //Checks if it is time to run an event by passing in last time completed, and unsigned refresh period
@@ -46,7 +38,7 @@ boolean cycleCheck(unsigned long *lastMillis, unsigned int cycle)
 
 void setup()
 {  
-  SetupAllSensors();    //See Sensor_Interface.ino
+  SetupAllSensors();    //See h_Sensor_Interface.ino
   
   //Put this at the end to avoid sync loss w/ ROScore
   nh.initNode();
@@ -55,48 +47,45 @@ void setup()
   nh.advertise(debug);
   nh.advertise(analog);
   //nh.subscribe(sub);
+
+  nh.spinOnce();
 }
 
 void loop()
 {
-  //External loops
-  GyroLoop();      //See MinIMU9AHRS
-  
-  //Begin round robin sensor polling
-  if(cycleCheck(&cycleSonarLastMillis, cycleSonar))
-  {
-   //str_msg.data = getSonicCharValue();
-   sonar.publish( &str_msg );
-  }
-  
-  //Gyro
-  if(cycleCheck(&cycleGyroLastMillis, cycleGyro))
-  {
-   gyroVal = readGyroValues();                 //See Sensor_Interface.ino
-   gyroVal.toCharArray(sensorBuffer, 50);      //Converts string to character array in sensorBuffer
-   str_msg.data = sensorBuffer;
-   primaryGyro.publish( &str_msg );
-  }
-  
-  //Analog Sensors
-  if(cycleCheck(&cycleAnalogLastMillis, cycleAnalog))
-  {
-   analogVal = readGyroValues();                 //See Sensor_Interface.ino
-   analogVal.toCharArray(sensorBuffer, 50);      //Converts string to character array in sensorBuffer
-   str_msg.data = sensorBuffer;
-   primaryGyro.publish( &str_msg );
-  }
+  //Sonar
+  sonarVal = readSonicScanner();                 //See Sensor_Interface.ino
+  sonarVal.toCharArray(sensorBuffer, 50);      //Converts string to character array in sensorBuffer
+  str_msg.data = sensorBuffer;
+  sonar.publish( &str_msg );
   
   nh.spinOnce();
-  delay(100);
+  
+  //Gyro
+  gyroVal = readGyroValues();                 //See Sensor_Interface.ino
+  gyroVal.toCharArray(sensorBuffer, 50);      //Converts string to character array in sensorBuffer
+  str_msg.data = sensorBuffer;
+  primaryGyro.publish( &str_msg );
+  nh.spinOnce();
+ 
+  //Analog Sensors
+  analogVal = readAnalogIns();                 //See Sensor_Interface.ino
+  analogVal.toCharArray(sensorBuffer, 50);      //Converts string to character array in sensorBuffer
+  str_msg.data = sensorBuffer;
+  analog.publish( &str_msg );
+  nh.spinOnce();
+   
+   
+  //int mem = freeMemory();
+  //String strMem = String(mem);
+  //PublishDebugMessage(strMem);
  
 }
-
 //Publishes a string over the ArduinoDebug channel
 void PublishDebugMessage(String msg)
 {
-  char buffer [100];                //Long buffer to hold debug message
-  msg.toCharArray(buffer, 100);    //Puts string into character buffer
+  char buffer [50];                //Long buffer to hold debug message
+  msg.toCharArray(buffer, 50);    //Puts string into character buffer
   
   str_msg.data = buffer;         //Places character buffer into str message to send over publisher
   debug.publish(&str_msg );

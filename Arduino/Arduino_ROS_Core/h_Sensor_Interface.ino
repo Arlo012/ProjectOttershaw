@@ -1,22 +1,21 @@
 //Libraries & definitions
 
-  #include <SonicScan.h>
-  #include <Wire.h>
-  #include <LSM303.h>
-  #include <L3G.h>
+#include <SonicScan.h>
+#include <Wire.h>
+#include <LSM303.h>
+#include <L3G.h>
   
+//Analog sensor pins to read
+int analogToRead[5] = {0, 1, 999, 999, 999}; //Make 999 if not in use
+SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
+
+
 //Initialization code
 void SetupAllSensors()
 {
-  //Todo need to get an object back somehow
-  GyroSetup();          //See MiniMU9AHRS.ino
-  
-  //Ultrasonic
-  SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
-
-  //Analog declarations here
-  //No need to instantiate analog sensors 
+  GyroSetup();
 }
+/*
 
 //Data collection and processing functions  
 String readGyroValues()
@@ -46,7 +45,17 @@ String readGyroValues()
     //gyroValue[i+5] = gyroYVal[i+5];
     //gyroValue[i+10] = gyroZVal[i+10];
   }
+  String debug = "";
+  return debug;
+  
 }
+*/
+
+
+float rawValue;
+float resistanceVal;
+int resistanceInt;
+String analogResistances;
 
 String readAnalogIns()
 {
@@ -54,37 +63,39 @@ String readAnalogIns()
   //concatenates resistances comma-separated,
   //and ignores inputs without sensors
 
-  float rawValue = 0;
-  float resistanceVal = 0;
-  String analogResistances = "";
+  rawValue = 0;
+  resistanceVal = 0;
+  resistanceInt = 0;
+  analogResistances = "";
 
   //Collect all analog sensor values
   //and place them in a string comma separated
-  for(int i = 0; i < 7; i++)
+  for(int i = 0; i < sizeof(analogToRead); i++)
   {
-    rawValue = analogRead('A' + (char)i);
-    if(rawValue < 0 && rawValue > 32767)
+    if(analogToRead[i] != 999)
     {
-      resistanceVal = ((26.4*rawValue)/(1-(rawValue/1023.0))); //convert analog read to resistance
-    
-      //TODO you can't convert float to string like this
-      //analogResistances += resistanceVal + ","; //concatenate comma-separated resistances
-    
+      rawValue = analogRead('A' + (char)analogToRead[i]);
+      resistanceVal = (rawValue * (5.0 / 1023.0));
+      resistanceInt = int(resistanceVal);
+      delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
+      
+      analogResistances += String(resistanceInt) + ","; //concatenate comma-separated resistances
     }
-    delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
   }
   
   //remove extra comma at the end of string and add an end-of-string character for easier processing
   analogResistances = analogResistances.substring(0, analogResistances.length() - 1); 
   analogResistances += "!";
 
-  //TODO 
+
   return analogResistances;    //Return reference
+
 }
+
 
 String readSonicScanner()
 {
-  String toReturn;
-  //TODO implement me (probably just a wrapper around sonic scanner library)
+  String toReturn = String(sonicScan.sonicRead());
   return toReturn;
 }
+

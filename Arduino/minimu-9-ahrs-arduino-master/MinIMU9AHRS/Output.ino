@@ -30,9 +30,6 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 
 void printdata(void)
 {    
-  
-      //TODO re-implement this over ROS
-      /*
       Serial.print("!");
 
       #if PRINT_EULER == 1
@@ -63,8 +60,6 @@ void printdata(void)
       Serial.print (",");
       Serial.print(c_magnetom_z);
       #endif
-      */
-      
       /*#if PRINT_DCM == 1
       Serial.print (",DCM:");
       Serial.print(convert_to_dec(DCM_Matrix[0][0]));
