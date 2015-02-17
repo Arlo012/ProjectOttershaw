@@ -35,11 +35,11 @@ void loop() {
 
   Serial.print("G ");
   Serial.print("X: ");
-  Serial.print((int)gyro.g.x);
+  Serial.print((int)gyro.g.x * 8.75);
   Serial.print(" Y: ");
-  Serial.print((int)gyro.g.y);
+  Serial.print((int)gyro.g.y * 8.75);
   Serial.print(" Z: ");
-  Serial.println((int)gyro.g.z);
+  Serial.println((int)gyro.g.z * 8.75);
 
   delay(100);
 }

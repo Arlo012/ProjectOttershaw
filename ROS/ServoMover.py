@@ -43,7 +43,7 @@ class ServoMover:
 
 	def __init__(self, pub =0, rate =0):#servoToMove, angleToMove):
 		self.pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
-    		rospy.init_node('talker', anonymous=True)
+		rospy.init_node('talker', anonymous=True)
    		self.rate = rospy.Rate(100) #Will certainly push through the values needed 
 
 	def MoveServo(self, data_str1):
@@ -60,6 +60,6 @@ if __name__ == '__main__':
 
 	data_str1 = raw_input("which servo/angle(servo,angle): ")
 	servomove=ServoMover()
-        servomove.MoveServo(data_str1)
+	servomove.MoveServo(data_str1)
     except rospy.ROSInterruptException:
         pass
