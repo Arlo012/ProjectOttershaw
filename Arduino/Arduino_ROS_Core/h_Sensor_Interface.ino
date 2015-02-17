@@ -1,101 +1,58 @@
 //Libraries & definitions
 
-#include <SonicScan.h>
 #include <Wire.h>
 #include <LSM303.h>
 #include <L3G.h>
   
-//Analog sensor pins to read
-int analogToRead[5] = {0, 1, 999, 999, 999}; //Make 999 if not in use
 SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
-
 
 //Initialization code
 void SetupAllSensors()
 {
-  GyroSetup();
+  //GyroSetup();
+  
+  //Ultrasonic sensor setup
+  pinMode(8,OUTPUT); //attach pin 8 to vcc
+  pinMode(11,OUTPUT);  //attach pin 11 GND
+  digitalWrite(8, HIGH);  //VCC on pin 8
 }
-/*
-
-//Data collection and processing functions  
-String readGyroValues()
-{
-  //Get gyro reading here
-  //Concatenate all 3 gyro axial values
-  //in one CSV string
-  
-  String gyroCsvValues = "";  //String to be returned after convertion to a char array.
-  
-  //Three axial values: x, y , z
-  char gyroXVal[5] = {};  
-  char gyroYVal[5] = {};
-  char gyroZVal[5] = {};
-  
-  //Convert values to char arrays
-  itoa((int)ToDeg(roll), gyroXVal,10);
-  itoa((int)ToDeg(pitch), gyroYVal,10);
-  itoa((int)ToDeg(yaw), gyroZVal,10);
-
-  char gyroValue[25] = {};  //TODO Change to publish angles instead of raw data
-  for(int i=0; i<5;i++)
-  {
-    //Write all three gyro values within the same for loop
-    //by allocating space in the char array
-    //gyroValue[i] = gyroXVal[i];
-    //gyroValue[i+5] = gyroYVal[i+5];
-    //gyroValue[i+10] = gyroZVal[i+10];
-  }
-  String debug = "";
-  return debug;
-  
-}
-*/
-
 
 float rawValue;
 float resistanceVal;
 int resistanceInt;
-String analogResistances;
-
-String readAnalogIns()
+int analogValues[4] = {-1, -1, -1, -1}; 
+//                  -1, -1, -1, -1, 
+//                   -1, -1, -1, -1};
+//
+int* readAnalogIns()
 {
-  //Reads all the analog inputs to check for values, 
-  //concatenates resistances comma-separated,
-  //and ignores inputs without sensors
+  //Reads all the analog inputs to check 
+  //Convert using resistance value
+  //TODO: smarter conversion here (resistance is hard-coded below)
 
   rawValue = 0;
   resistanceVal = 0;
   resistanceInt = 0;
-  analogResistances = "";
 
   //Collect all analog sensor values
-  //and place them in a string comma separated
-  for(int i = 0; i < sizeof(analogToRead); i++)
+  for(int i = 0; i < sizeof(analogValues); i++)
   {
-    if(analogToRead[i] != 999)
-    {
-      rawValue = analogRead('A' + (char)analogToRead[i]);
+      rawValue = analogRead('A' + (char)i);
       resistanceVal = (rawValue * (5.0 / 1023.0));
       resistanceInt = int(resistanceVal);
+      analogValues[i] = resistanceInt;  
       delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
-      
-      analogResistances += String(resistanceInt) + ","; //concatenate comma-separated resistances
-    }
   }
-  
-  //remove extra comma at the end of string and add an end-of-string character for easier processing
-  analogResistances = analogResistances.substring(0, analogResistances.length() - 1); 
-  analogResistances += "!";
 
-
-  return analogResistances;    //Return reference
-
+  return analogValues;    //Return reference
 }
 
 
-String readSonicScanner()
+//Note: this is just a convenience wrapper
+long toReturn = 0;
+long readSonicScanner()
 {
-  String toReturn = String(sonicScan.sonicRead());
+  toReturn = sonicScan.sonicRead();
   return toReturn;
 }
 

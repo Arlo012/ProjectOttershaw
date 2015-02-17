@@ -11,13 +11,16 @@ class SonicScan
       //Initialize the sensor by sending a pulse to the trig pin
       //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
       digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
+      //PORTB &= ~_BV(PB1);
       delayMicroseconds(2);
+      //PORTB |= _BV(PB1);
       digitalWrite(_trigPin,HIGH);
       delayMicroseconds(5);
+      //PORTB &= ~_BV(PB1);
       digitalWrite(_trigPin,LOW);
     }
     
-    long msToCm(long microseconds)
+    float msToCm(long microseconds)
     {
       // The speed of sound is 340 m/s or 29 microseconds per centimeter.
       // The ping travels out and back, so to find the distance of the
@@ -37,7 +40,7 @@ class SonicScan
       _echoPin = echoPin;
     }
     
-    long sonicRead()
+    float sonicRead()
     {
       trigPulse();
       //Returns distance reading of ultrasonic sensor in centimeters. 

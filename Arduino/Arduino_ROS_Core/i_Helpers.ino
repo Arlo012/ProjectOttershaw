@@ -47,7 +47,7 @@ String* ParseCSV(String toDelimit, int dataSize)
     
     if(endOfStringFlag)
     {
-      PublishDebugMessage(parsingString);
+      //PublishDebugMessage(parsingString);
       parsedArray[dataCounter] = parsingString;
       dataCounter++;    //Go onto next data point
       parsingString = "";

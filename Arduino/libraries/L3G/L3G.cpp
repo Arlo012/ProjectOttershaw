@@ -23,7 +23,7 @@ L3G::L3G(void)
 {
   _device = device_auto;
 
-  io_timeout = 0;  // 0 = no timeout
+  io_timeout = 100;  // 0 = no timeout, units in ms
   did_timeout = false;
 }
 
