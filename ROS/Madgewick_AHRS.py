@@ -11,7 +11,17 @@
 # 19/02/2012    SOH Madgwick    Magnetometer measurement is normalised
 #
 #=====================================================================================================
+# Translated for Python 2.x by Jeffrey Eitel
+# Stevens Institute of Technology
+# Project Ottershaw, 2/17/15
+# 
+# Using this file: update sampleFreq according to expected data input frequency
+# Tune using proportional gain
+#=====================================================================================================
 
+
+import math
+from tf import transformations
 
 # Definitions
 
@@ -21,13 +31,13 @@ betaDef = 0.1      # 2 * proportional gain
 #---------------------------------------------------------------------------------------------------
 # Variable definitions
 
-beta = betaDef                                # 2 * proportional gain (Kp)
+beta = betaDef      # 2 * proportional gain (Kp)
 
 # quaternion of sensor frame relative to auxiliary frame
 q0 = 1.0
 q1 = 0.0
-g2 = 0.0
-q3 = 0.0 
+q2 = 0.0
+q3 = 0.0
 
 #====================================================================================================
 # Functions
@@ -35,12 +45,20 @@ q3 = 0.0
 #---------------------------------------------------------------------------------------------------
 # AHRS algorithm update
 
+
 def MadgwickAHRSupdate(gx,  gy,  gz,  ax,  ay,  az,  mx,  my,  mz):
+    ''' 
+    Update IMU with gyro, accelerometer, & compass values
+    q0, q1, q2, q3 will be modified and readable outside the function
+    '''
+    
+    global q0, q1, q2, q3
+    
     # Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
     if mx == 0.0 and my == 0.0 and mz == 0.0:
         MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az)
         return
-
+    
     # Rate of change of quaternion from gyroscope
     qDot1 = 0.5 * (-q1 * gx - q2 * gy - q3 * gz)
     qDot2 = 0.5 * (q0 * gx + q2 * gz - q3 * gy)
@@ -86,7 +104,7 @@ def MadgwickAHRSupdate(gx,  gy,  gz,  ax,  ay,  az,  mx,  my,  mz):
         # Reference direction of Earth's magnetic field
         hx = mx * q0q0 - _2q0my * q3 + _2q0mz * q2 + mx * q1q1 + _2q1 * my * q2 + _2q1 * mz * q3 - mx * q2q2 - mx * q3q3
         hy = _2q0mx * q3 + my * q0q0 - _2q0mz * q1 + _2q1mx * q2 - my * q1q1 + my * q2q2 + _2q2 * mz * q3 - my * q3q3
-        _2bx = sqrt(hx * hx + hy * hy)
+        _2bx = math.sqrt(hx * hx + hy * hy)
         _2bz = -_2q0mx * q2 + _2q0my * q1 + mz * q0q0 + _2q1mx * q3 - mz * q1q1 + _2q2 * my * q3 - mz * q2q2 + mz * q3q3
         _4bx = 2.0 * _2bx
         _4bz = 2.0 * _2bz
@@ -126,6 +144,13 @@ def MadgwickAHRSupdate(gx,  gy,  gz,  ax,  ay,  az,  mx,  my,  mz):
 # IMU algorithm update
 
 def MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az):
+    ''' 
+    Update IMU with only gyro & accelerometer values
+    q0, q1, q2, q3 will be modified and readable outside the function
+    '''
+   
+    global q0, q1, q2, q3
+    
     # Rate of change of quaternion from gyroscope
     qDot1 = 0.5 * (-q1 * gx - q2 * gy - q3 * gz)
     qDot2 = 0.5 * (q0 * gx + q2 * gz - q3 * gy)
@@ -186,11 +211,43 @@ def MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az):
     q2 *= recipNorm
     q3 *= recipNorm
 
-#Inverse square root
 def invSqrt(x):
+    '''
+    Inverse square root
+    '''
     return x ** -1/2
+
+
+def getEuler():
+    '''
+    Return euler angles in form of pitch yaw roll
+    Note: only a wrapper for Christoph Gohlke's quaternion code
+    '''
+    euler = transformations.euler_from_quaternion([q0,q1,q2,q3])
+    return euler
 
 
 #====================================================================================================
 # END OF CODE
 #====================================================================================================
+
+
+#Simple test (quaternion output)
+'''
+MadgwickAHRSupdate(10,15,20, 10,15,20, 10,15,20)
+MadgwickAHRSupdate(10,16,22, 10,15,20, 10,15,20)
+MadgwickAHRSupdate(10,12,22, 10,15,20, 10,15,20)
+MadgwickAHRSupdate(10,13,21, 10,15,20, 10,15,20)
+print '{0}, {1}, {2}, {3}'.format(q0, q1, q2, q3)
+'''
+
+#To Euler test
+'''
+MadgwickAHRSupdate(50,15,20, 100,15,20, 30,15,20)
+rpy = getEuler()
+roll = rpy[0]
+pitch = rpy[1]
+yaw = rpy[2]
+print '{0}, {1}, {2}'.format(roll, pitch, yaw)
+'''
+
