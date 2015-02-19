@@ -47,7 +47,9 @@ int SENSOR_SIGN[9] = {1,1,1,-1,-1,-1,1,1,1}; //Correct directions x,y,z - gyro, 
 
 // tested with Arduino Uno with ATmega328 and Arduino Duemilanove with ATMega168
 
+#include <ros.h>
 #include <Wire.h>
+#include <ottershaw/Gyro.h>
 
 // LSM303 accelerometer: 8 g sensitivity
 // 3.9 mg/digit; 1 g = 256
@@ -86,7 +88,8 @@ int SENSOR_SIGN[9] = {1,1,1,-1,-1,-1,1,1,1}; //Correct directions x,y,z - gyro, 
 
 //#define PRINT_DCM 0     //Will print the whole direction cosine matrix
 #define PRINT_ANALOGS 0 //Will print the analog raw data
-#define PRINT_EULER 1   //Will print the Euler angles Roll, Pitch and Yaw
+#define PRINT_EULER 0   //Will print the Euler angles Roll, Pitch and Yaw
+#define PRINT_ROS 1     //Will print over ROS
 
 #define STATUS_LED 13 
 
@@ -149,16 +152,26 @@ float Temporary_Matrix[3][3]={
   ,{
     0,0,0  }
 };
- 
+
+ros::NodeHandle nh;
+ottershaw::Gyro gyro_msg;
+ros::Publisher primaryGyro("gyro", &gyro_msg);    //Warning: 'gyro' has namespace collision with I2C.ino
+
 void setup()
 { 
-  Serial.begin(115200);
+  if(PRINT_ROS != 1)
+  {
+    Serial.begin(115200);
+  }
   pinMode (STATUS_LED,OUTPUT);  // Status LED
   
   I2C_Init();
 
-  Serial.println("Pololu MinIMU-9 + Arduino AHRS");
-
+  if(PRINT_ROS != 1)
+  {
+    Serial.println("Pololu MinIMU-9 + Arduino AHRS");
+  }
+  
   digitalWrite(STATUS_LED,LOW);
   delay(1500);
  
@@ -184,14 +197,22 @@ void setup()
   
   //Serial.println("Offset:");
   for(int y=0; y<6; y++)
-    Serial.println(AN_OFFSET[y]);
-  
+  {
+    if(PRINT_ROS != 1)
+    {
+      Serial.println(AN_OFFSET[y]);
+    }
+  }
+
   delay(2000);
   digitalWrite(STATUS_LED,HIGH);
     
   timer=millis();
   delay(20);
   counter=0;
+  
+  nh.initNode();
+  nh.advertise(primaryGyro);
 }
 
 void loop() //Main Loop

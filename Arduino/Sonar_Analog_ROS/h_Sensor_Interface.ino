@@ -1,29 +1,28 @@
-//Libraries & definitions
-
 #include <Wire.h>
-#include <LSM303.h>
-#include <L3G.h>
+
+//Libraries & definitions
   
 SonicScan sonicScan("sonicScan",9,10);    //Initialize the ultrasonic scanner to echo/trigger pin
 
 //Initialization code
 void SetupAllSensors()
 {
-  //GyroSetup();
-  
   //Ultrasonic sensor setup
   pinMode(8,OUTPUT); //attach pin 8 to vcc
   pinMode(11,OUTPUT);  //attach pin 11 GND
   digitalWrite(8, HIGH);  //VCC on pin 8
+  
+  //TODO analog setup
 }
 
+//TODO clean these variables up, as needed
 float rawValue;
 float resistanceVal;
 int resistanceInt;
-int analogValues[4] = {-1, -1, -1, -1}; 
-//                  -1, -1, -1, -1, 
-//                   -1, -1, -1, -1};
-//
+int analogValues[analogPins];
+
+//Reads all analog pins (as defined by analogPins defined in Sonar_Analog_ROS) and returns array of their values
+//TODO unit conversion? Or just return raw values as-is?
 int* readAnalogIns()
 {
   //Reads all the analog inputs to check 
@@ -35,12 +34,13 @@ int* readAnalogIns()
   resistanceInt = 0;
 
   //Collect all analog sensor values
-  for(int i = 0; i < sizeof(analogValues); i++)
+  for(int i = 0; i < analogPins; i++)
   {
-      rawValue = analogRead('A' + (char)i);
-      resistanceVal = (rawValue * (5.0 / 1023.0));
-      resistanceInt = int(resistanceVal);
-      analogValues[i] = resistanceInt;  
+      rawValue = analogRead(i);
+      //resistanceVal = (rawValue * (5.0 / 1023.0));
+      //resistanceInt = int(resistanceVal);
+      //analogValues[i] = resistanceInt;  
+      analogValues[i] = rawValue;
       delay(50);     //Keep an eye out for this delay. Might give speed or reading problems later
   }
 

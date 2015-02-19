@@ -1,4 +1,4 @@
-//Sensor classes here
+
 class SonicScan
 {
   
@@ -11,7 +11,7 @@ class SonicScan
       //Initialize the sensor by sending a pulse to the trig pin
       //The ultrasonic sensor is triggered by a high pulse > 2 microseconds
       digitalWrite(_trigPin,LOW); //send low pulse to ensure clean high pulse
-      //PORTB &= ~_BV(PB1);
+      //PORTB &= ~_BV(PB1);    //TODO test these in place of digitalWrites (much faster direct bus addressing)
       delayMicroseconds(2);
       //PORTB |= _BV(PB1);
       digitalWrite(_trigPin,HIGH);

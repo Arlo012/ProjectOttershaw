@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -44,15 +45,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   Gyro.msg
+   ServoAngle.msg
+   ServoSweep.msg
+   Analog.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
+#   AddTwoInts.srv
 #   Service1.srv
 #   Service2.srv
 # )
@@ -65,10 +69,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -81,7 +85,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES ottershaw_masta
+#  LIBRARIES ottershaw
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -98,19 +102,19 @@ include_directories(
 )
 
 ## Declare a cpp library
-# add_library(ottershaw_masta
-#   src/${PROJECT_NAME}/ottershaw_masta.cpp
+# add_library(ottershaw
+#   src/${PROJECT_NAME}/ottershaw.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(ottershaw_masta_node src/ottershaw_masta_node.cpp)
+# add_executable(ottershaw_node src/ottershaw_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(ottershaw_masta_node ottershaw_masta_generate_messages_cpp)
+# add_dependencies(ottershaw_node ottershaw_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(ottershaw_masta_node
+# target_link_libraries(ottershaw_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -129,7 +133,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ottershaw_masta ottershaw_masta_node
+# install(TARGETS ottershaw ottershaw_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -154,7 +158,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ottershaw_masta.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ottershaw.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
