@@ -1,7 +1,7 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int32.h>
-#include <ottershaw/Analog.h>
+#include <ottershaw_masta/Analog.h>
 
 //Constants
 #define analogPins 4    //How many analog pins (starting at A0) are we going to read?
@@ -9,6 +9,10 @@
 //LED pins
 #define leftEyePin 12
 #define rightEyePin 7
+
+//Piezo Buzzer pin
+#define mouth 6 
+#define mouth2 5
 
 //Begin main class declaration
 ros::NodeHandle nh;
@@ -36,6 +40,15 @@ void setup()
   digitalWrite(leftEyePin, HIGH);
   digitalWrite(rightEyePin, HIGH);  
   
+  //Piezo Buzzer Mouth
+  pinMode(mouth, OUTPUT);
+  pinMode(mouth2, OUTPUT);
+  tone(mouth, 1000, 1000);
+  beep(50);
+  beep(50);
+  beep(50);
+  delay(500);
+  
   //Put this at the end to avoid sync loss w/ ROScore
   nh.initNode();
   nh.advertise(debug);
@@ -52,6 +65,34 @@ void loop()
   int_msg.data = sonarVal;
   sonar.publish(&int_msg);
   nh.spinOnce();
+  
+  //Buzzer
+  if((int)sonarVal < 10)
+  {
+    beep(10);
+    //tone(mouth, 10000, 200);
+  }
+  else if((int)sonarVal < 30)
+  {
+    beep(50);
+    //tone(mouth, 5000, 200);
+  }
+  else if((int)sonarVal < 50)
+  {
+    beep(200);
+    //tone(mouth, 2500, 200);
+  }
+  else if((int)sonarVal < 100)
+  {
+    beep(500);
+    //tone(mouth, 100, 200);
+  }
+  else
+  {
+    beep(4000);
+    //tone(mouth, 10, 200);
+  }
+  
   
   //Analog Sensors (return one at a time)
   analogReads = readAnalogIns();                 //See Sensor_Interface.ino
