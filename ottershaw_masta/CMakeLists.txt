@@ -48,15 +48,12 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    Gyro.msg
-   ServoAngle.msg
-   ServoSweep.msg
    Analog.msg
  )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   AddTwoInts.srv
 #   Service1.srv
 #   Service2.srv
 # )
@@ -85,7 +82,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES ottershaw
+#  LIBRARIES ottershaw_masta
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -102,19 +99,19 @@ include_directories(
 )
 
 ## Declare a cpp library
-# add_library(ottershaw
-#   src/${PROJECT_NAME}/ottershaw.cpp
+# add_library(ottershaw_masta
+#   src/${PROJECT_NAME}/ottershaw_masta.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(ottershaw_node src/ottershaw_node.cpp)
+# add_executable(ottershaw_masta_node src/ottershaw_masta_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(ottershaw_node ottershaw_generate_messages_cpp)
+# add_dependencies(ottershaw_masta_node ottershaw_masta_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(ottershaw_node
+# target_link_libraries(ottershaw_masta_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -133,7 +130,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ottershaw ottershaw_node
+# install(TARGETS ottershaw_masta ottershaw_masta_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -158,7 +155,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ottershaw.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ottershaw_masta.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
