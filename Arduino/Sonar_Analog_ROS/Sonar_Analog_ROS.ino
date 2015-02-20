@@ -20,7 +20,7 @@ ros::NodeHandle nh;
 //Publisher
 std_msgs::String str_msg;
 std_msgs::Int32 int_msg;
-ottershaw::Analog analog_msg;
+ottershaw_masta::Analog analog_msg;
 
 ros::Publisher sonar("sonar", &int_msg);
 ros::Publisher debug("ArduinoDebug", &str_msg);
