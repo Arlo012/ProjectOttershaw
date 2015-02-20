@@ -20,7 +20,7 @@ catkin_make clean > ~/OttershawLogs/$logname.log
 echo "Done"
 echo
 
-echo "Building catking workspace (this make take some time)...."
+echo "Building catking workspace (this may take some time)...."
 timestamp=$( date +"%m-%d-%Y+%T")
 logname="CatkinBuild$timestamp"
 touch ~/OttershawLogs/$logname.log
