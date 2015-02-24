@@ -17,6 +17,7 @@ timestamp=$( date +"%m-%d-%Y+%T" )
 logname="CatkinClean$timestamp"
 touch ~/OttershawLogs/$logname.log
 catkin_make clean > ~/OttershawLogs/$logname.log
+echo "END OF LOG" >> ~/OttershawLogs/$logname.log
 echo "Done"
 echo
 
@@ -24,6 +25,7 @@ echo "Building catking workspace (this may take some time)...."
 timestamp=$( date +"%m-%d-%Y+%T")
 logname="CatkinBuild$timestamp"
 touch ~/OttershawLogs/$logname.log
-catkin_make > ~/OttershawLogs/$logname.log
+catkin_make --pkg ottershaw_masta > ~/OttershawLogs/$logname.log
+echo "END OF LOG" >> ~/OttershawLogs/$logname.log
 echo "Done"
 echo
