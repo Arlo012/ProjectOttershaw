@@ -39,9 +39,15 @@
 import rospy
 import os
 from std_msgs.msg import Int32
+import MovingAverageFilter
+from MovingAverageFilter import AnalogTimeReadings as atr
+import DebugTalker as talker
 
-
-var = 0
+#Instantiate a moving average filter to process sonar sensor data
+#For better resolution pick higher N value
+dataPoints = 250
+derivativePoints = 50
+maf = MovingAverageFilter.MovingAverageFilter(dataPoints, derivativePoints, 250)
 
 def listener(): 
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -49,14 +55,16 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
 
-    rospy.Subscriber('sonar', Int32, servoCall)
-    
+    rospy.init_node('SonarNode', anonymous=True)
+
+    rospy.Subscriber('sonar', Int32, sonarCall)
+    talker.talker()     #Initialize talker on ArduinoCommand
+
     rospy.spin()
 
 
-def servoCall(data):
+def sonarCall(data):
     '''
     Do work for this particular call using 'data'
     This function is called every time a new data comes in on the listener.
@@ -64,9 +72,48 @@ def servoCall(data):
     Inputs:
         data = generic value (string, int, etc) for processing
     '''
-   
-   #Do all your work in here
+    #Do all your work in here
+    reading = atr(data.data)
+    derivativeDistance = (reading.readValue - maf.sonicReadings[dataPoints-2].readValue)/(reading.readTime - maf.sonicReadings[dataPoints-2].readTime)
+
+
+    maf.updateDataFilter(reading)
+    maf.updateDerivativeFilter(derivativeDistance)
+
+    #Debugging purposes
+    if passingObject():
+        print "I SEE YOU"
+        print maf.averageDerivativeValue
+        print "----"
+
+        #Send command to ArduinoCommand
+        talker.data = "BLINK"
+        talker.dataToSend = True
+    if objectInReach():
+        print "I CAN TOUCH YOU"
+        print maf.averageDataValue
+        print "----"
+
+    #print reading.readValue
+    #print maf.averageDataValue
+    #print maf.averageDerivativeValue
+    #print "--------"
+
+def passingObject():
+    if abs(maf.averageDerivativeValue) > 75:
+        return True
+    else:
+        return False
+
+def objectInReach():
+    if maf.averageDataValue <= 30:
+        return True
+    else:
+        return False
+
 
 if __name__ == '__main__':
-  listener()
+    listener()
+
+
   

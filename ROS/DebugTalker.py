@@ -33,40 +33,27 @@
 #
 # Revision $Id$
 
-## Simple talker demo that listens to std_msgs/Strings published 
+## Simple talker demo that published std_msgs/Strings messages
 ## to the 'chatter' topic
 
 import rospy
-import os
-from std_msgs.msg import Int32
+from std_msgs.msg import String
+#file to class in python, python init, create instance of class in some other function, us it to call init, one function in there called moveservo, 
 
+dataToSend = False
+data = ""
 
-var = 0
+def talker():
+    global dataToSend
+    global data
 
-def listener(): 
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # node are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'talker' node so that multiple talkers can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
+    pub = rospy.Publisher('ArduinoCommand', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
+    #rospy.init_node('talker', anonymous=True)
+    rate = rospy.Rate(10) #Frequency of 10hz
 
-    rospy.Subscriber('sonar', Int32, servoCall)
-    
-    rospy.spin()
-
-
-def servoCall(data):
-    '''
-    Do work for this particular call using 'data'
-    This function is called every time a new data comes in on the listener.
-
-    Inputs:
-        data = generic value (string, int, etc) for processing
-    '''
-   
-   #Do all your work in here
-
-if __name__ == '__main__':
-  listener()
-  
+    while not rospy.is_shutdown():
+        if dataToSend:
+            #Task 1
+            pub.publish(data)
+            dataToSend = False
+        rate.sleep()
