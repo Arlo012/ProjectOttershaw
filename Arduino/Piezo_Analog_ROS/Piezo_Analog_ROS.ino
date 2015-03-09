@@ -8,9 +8,9 @@ const int legs[] = {A0, A1, A2, A3, A4, A5, A6, A7};  //Is this possible? Took i
 
 //Threshold constants for the piezo vibration sensor
 //TODO: Define these values through testing of sensor
-#define standingThreshold 0
-#define movingThreshold 1
-#define collisionThreshold 2
+#define standingThreshold 20
+#define movingThreshold 100
+#define collisionThreshold 600
 
 //LED pins
 //could incorporate legs on black widow symbol
@@ -48,15 +48,16 @@ void loop()
 
 int detectLegStatus(int legPin)
 {
-  if(analogRead(legPin) < standingThreshold)
+  int legValue = analogRead(legPin);
+  if((legValue < standingThreshold) && (legValue > 0))
   {
     return 0;
   }
-  else if(analogRead(legPin) < movingThreshold)
+  else if((legValue < movingThreshold) && (legValue > standingThreshold))
   {
     return 1;
   }
-  else if(analogRead(legPin) > collisionThreshold)
+  else if((legValue < collisionThreshold) && (legValue > movingThreshold))
   {
     return -1;
   }
