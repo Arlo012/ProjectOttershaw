@@ -39,15 +39,39 @@
 import rospy
 import os
 from std_msgs.msg import Int32
-import MovingAverageFilter
-from MovingAverageFilter import AnalogTimeReadings as atr
-import DebugTalker as talker
 
-#Instantiate a moving average filter to process sonar sensor data
-#For better resolution pick higher N value
-dataPoints = 250
-derivativePoints = 50
-maf = MovingAverageFilter.MovingAverageFilter(dataPoints, derivativePoints, 250)
+class SpiderLegs:
+    '''
+    Contains three arrays:
+        indexes of legs on ground
+        indexes of legs in movement
+        indexes of legs that collided
+
+    Could be expanded for other processing features
+    such as position of each leg in 3D space
+    '''
+    def __init__(self):
+        self.legsOnGround = []
+        self.legsInMovement = []
+        self.legsCollided = []
+
+    #These functions are used for debugging
+    #Could access the arrays directly once implementation is complete
+    def getLegsOnGround():
+        print legsOnGround
+        print "-----------"
+
+    def getLegsInMovement():
+        print legsInMovement
+        print "-----------"
+
+    def getlegsCollided():
+        print legsCollided
+        print "-----------"
+
+borisLegs = SpiderLegs()
+legStatus = []  #Create array of 0's, 1's and -1's from incomming readings
+numReadings = 0 #keep count of readings to divide data in blocks of 8 (one per leg)
 
 def listener(): 
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -55,65 +79,49 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
+    rospy.init_node('LegPiezo', anonymous=True)
 
-    rospy.init_node('SonarNode', anonymous=True)
-
-    rospy.Subscriber('sonar', Int32, sonarCall)
-    talker.talker()     #Initialize talker on ArduinoCommand
-
+    rospy.Subscriber('piezo', Int32, piezoCall)
+    
     rospy.spin()
 
 
-def sonarCall(data):
+def piezoCall(data):
     '''
     Do work for this particular call using 'data'
     This function is called every time a new data comes in on the listener.
 
     Inputs:
-        data = generic value (string, int, etc) for processing
+        data = array of -1's, 1's & 0's,
+
+    Value determines if the leg's on the ground (0), in the air (1), or collided (-1)
     '''
-    #Do all your work in here
-    reading = atr(data.data)
-    derivativeDistance = (reading.readValue - maf.dataReadings[dataPoints-2].readValue)/(reading.readTime - maf.dataReadings[dataPoints-2].readTime)
 
+   #TODO: Test if leg in movement generates enough vibration to be detected by sensor
+   #to use inverted values, i.e. using 0 for completed step and 1 for leg in movement
+   
+   numReadings = numReadings + 1
 
-    maf.updateDataFilter(reading)
-    maf.updateDerivativeFilter(derivativeDistance)
+   if numReadings % 8 != 0:
+        legStatus.append(data.data)
+   else:
+      for i, leg in enumerate(legStatus):
+        if leg == 0:
+            borisLegs.legsOnGround.append(i)
+        elif leg == 1:
+            borisLegs.legsInMovement.append(i)
+        elif leg == -1:
+            borisLegs.legsCollided.append(i)
+        else:
+            print "Invalid Status on leg %s" % i
 
-    #Debugging purposes
-    if passingObject():
-        print "I SEE YOU"
-        print maf.averageDerivativeValue
-        print "----"
-
-        #Send command to ArduinoCommand
-        talker.data = "BLINK"
-        talker.dataToSend = True
-    if objectInReach():
-        print "I CAN TOUCH YOU"
-        print maf.averageDataValue
-        print "----"
-
-    #print reading.readValue
-    #print maf.averageDataValue
-    #print maf.averageDerivativeValue
-    #print "--------"
-
-def passingObject():
-    if abs(maf.averageDerivativeValue) > 75:
-        return True
-    else:
-        return False
-
-def objectInReach():
-    if maf.averageDataValue <= 30:
-        return True
-    else:
-        return False
+        #Do we need to call the function every time a new data passes through ROS?
+        #Would we actuate the servos from this python script? - would need a servo publisher.
+        borisLegs.getLegsOnGround()
+        borisLegs.getLegsInMovement()
+        borisLegs.getlegsCollided()
 
 
 if __name__ == '__main__':
-    listener()
-
-
+  listener()
   

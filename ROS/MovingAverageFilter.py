@@ -3,7 +3,7 @@ import time
 class AnalogTimeReadings:
 	'''
 	New data type with time-based readings. Allows implementation of PID
-	algorithms for sensor sonicReadings
+	algorithms for sensor dataReadings
 	'''
 
 	def __init__(self, value):
@@ -22,35 +22,38 @@ class MovingAverageFilter:
 		Initiate filter with N sample points and fill in 
 		the list with dummy readings
 		'''
-		self.sonicReadings = []
+		self.dataReadings = []
 		self.derivativeValues = []
 		self.averageDataValue = dummyVal
 		self.averageDerivativeValue = 0
 		self.sampleSize = dataPoints
 		self.derivativeSampleSize = derivativePoints
-
 		dummyAnalogVal = AnalogTimeReadings(dummyVal)
-		for i in range(0, self.sampleSize):
-			self.sonicReadings.append(dummyAnalogVal)
 
-		for i in range(0, self.derivativeSampleSize):
-			self.derivativeValues.append(0)
+		# Test if works
+		fillArray = lambda size, val, array: [self.array.append(val) for i in range(0,size)]
+		fillArray(self.sampleSize,dummyAnalogVal,dataReadings)
+		fillArray(self.derivativeSampleSize,0,derivativeValues)
+
+		# for i in range(0, self.sampleSize):
+		# 	self.dataReadings.append(dummyAnalogVal)
+
+		# for i in range(0, self.derivativeSampleSize):
+		# 	self.derivativeValues.append(0)
 
 	def updateDataFilter(self, data):
 		'''
 		Remove the first reading, add the new data point,
 		and return the new average
 		'''
-		self.sonicReadings.pop(0)
-		self.sonicReadings.append(data)
+		self.dataReadings.pop(0)
+		self.dataReadings.append(data)
 
 		#Computation of new Average Value
-
-		#self.averageValue = sum(self.sonicReadings.readValue)/self.sampleSize
-		self.averageDataValue = 0
-		for i in range(0,self.sampleSize):
-			self.averageDataValue = self.averageDataValue + self.sonicReadings[i].readValue
-		self.averageDataValue /= self.sampleSize
+		self.averageDataValue = sum([AnalogTimeReadings.readValue for AnalogTimeReadings in dataReadings])/self.sampleSize
+		# for i in range(0,self.sampleSize):
+		# 	self.averageDataValue = self.averageDataValue + self.dataReadings[i].readValue
+		# self.averageDataValue /= self.sampleSize
 
 	def updateDerivativeFilter(self, data):
 		'''
@@ -61,21 +64,22 @@ class MovingAverageFilter:
 		self.derivativeValues.append(data)
 
 		#Computation of new Average Value
+		self.averageDerivativeValue = sum(derivativeValues)/self.derivativeSampleSize
+		# for i in range(0,self.derivativeSampleSize):
+		# 	self.averageDerivativeValue = self.averageDerivativeValue + self.derivativeValues[i]
+		# self.averageDerivativeValue /= self.sampleSize
 
-		#self.averageValue = sum(self.sonicReadings.readValue)/self.sampleSize
-		self.averageDerivativeValue = 0
-		for i in range(0,self.derivativeSampleSize):
-			self.averageDerivativeValue = self.averageDerivativeValue + self.derivativeValues[i]
-		self.averageDerivativeValue /= self.sampleSize
+	'''
+	Used for debugging plots -- might be useful
+	'''
+	# def getDataTimes(self):
+	# 	tempArray = []
+	# 	for i in range(0,self.sampleSize):
+	# 		tempArray.append(self.dataReadings[i].readTime)
+	# 	return tempArray
 
-	def getDataTimes(self):
-		tempArray = []
-		for i in range(0,self.sampleSize):
-			tempArray.append(self.sonicReadings[i].readTime)
-		return tempArray
-
-	def getDataValues(self):
-		tempArray = []
-		for i in range(0,self.sampleSize):
-			tempArray.append(self.sonicReadings[i].readValue)
-		return tempArray
+	# def getDataValues(self):
+	# 	tempArray = []
+	# 	for i in range(0,self.sampleSize):
+	# 		tempArray.append(self.dataReadings[i].readValue)
+	# 	return tempArray
