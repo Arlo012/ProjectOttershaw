@@ -49,7 +49,7 @@ int SENSOR_SIGN[9] = {1,1,1,-1,-1,-1,1,1,1}; //Correct directions x,y,z - gyro, 
 
 #include <ros.h>
 #include <Wire.h>
-#include <ottershaw/Gyro.h>
+#include <ottershaw_masta/Gyro.h>
 
 // LSM303 accelerometer: 8 g sensitivity
 // 3.9 mg/digit; 1 g = 256
@@ -154,7 +154,8 @@ float Temporary_Matrix[3][3]={
 };
 
 ros::NodeHandle nh;
-ottershaw::Gyro gyro_msg;
+//ottershaw_masta::Gyro gyro_msg;
+ottershaw_masta::Gyro gyro_msg;
 ros::Publisher primaryGyro("gyro", &gyro_msg);    //Warning: 'gyro' has namespace collision with I2C.ino
 
 void setup()

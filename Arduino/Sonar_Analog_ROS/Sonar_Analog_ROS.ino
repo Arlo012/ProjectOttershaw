@@ -1,12 +1,12 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int32.h>
-//#include <ottershaw_masta/Analog.h>
+#include <ottershaw_masta/Analog.h>
 
 //Constants
 #define analogPins 4    //How many analog pins (starting at A0) are we going to read?
 
-//LED pins
+//LEDs
 #define leftEyePin 12
 #define rightEyePin 7
 
@@ -37,6 +37,12 @@ ros::Subscriber<std_msgs::String> sub("ArduinoCommand", &blink_msg);
 long sonarVal;
 int* analogReads;
 
+//Loop counter for LEDs
+unsigned long currentMillis;
+int ledState = LOW;             // ledState used to set the LED
+long previousMillis = 0;        // will store last time LED was updated
+int blinkInterval = 250;
+
 void setup()
 {  
   SetupAllSensors();    //See h_Sensor_Interface.ino
@@ -62,16 +68,44 @@ void setup()
 
 void loop()
 {  
+  currentMillis = millis();
+  
   //Sonar
   sonarVal = readSonicScanner();                 //See Sensor_Interface.ino
   int_msg.data = sonarVal;
   sonar.publish(&int_msg);
   nh.spinOnce();
   
-  //8-Ohm Speaker tone generator
-  toneGradient(sonarVal);
+  //Buzzer
+  if((int)sonarVal < 30)
+  {
+    beep(20);
+    BlinkLEDs(75);
+    //tone(mouth, 10000, 200);
+  }
+  else if((int)sonarVal < 50)
+  {
+    beep(50);
+    BlinkLEDs(100);
+    //tone(mouth, 5000, 200);
+  }
+  else if((int)sonarVal < 75)
+  {
+    beep(150);
+    BlinkLEDs(400);  
+    //tone(mouth, 2500, 200);
+  }
+  else if((int)sonarVal < 100)
+  {
+    beep(250);
+    //tone(mouth, 100, 200);
+  }
+  else
+  {
+    beep(500);
+  }
+
   
-  /*
   //Analog Sensors (return one at a time)
   analogReads = readAnalogIns();                 //See Sensor_Interface.ino
   for(int i = 0; i < analogPins; i++) 
@@ -80,8 +114,8 @@ void loop()
     analog_msg.value = analogReads[i];
     analog.publish( &analog_msg );
     nh.spinOnce();
-  }
-*/
+  } 
+
   //delay(100);    //TODO determine if any delay is needed here
 }
 
