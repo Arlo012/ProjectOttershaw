@@ -21,8 +21,24 @@ ros::Publisher servomessage("legs", &debug);
 void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 {
   //digitalWrite(8, HIGH);
-  desiredAngle[servoInfo.ID] = servoInfo.angle;
-  stepSize[servoInfo.ID] = servoInfo.stepSize;
+  if(servoAngleSafe(servoInfo.ID, servoInfo.angle))
+  {
+    desiredAngle[servoInfo.ID] = servoInfo.angle;
+    stepSize[servoInfo.ID] = servoInfo.stepSize;
+  }
+
+}
+
+boolean servoAngleSafe(int ID, int angle)
+{
+  if(ID == 1 || ID == 4 || ID == 7 || ID == 10 || ID == 13 || ID == 16 || ID == 19 || ID == 22)
+  {
+    if(angle < 13)
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 ros::Subscriber<ottershaw_masta::Servo> servoSubscriber("ServoMove", &setServoDestinations);
@@ -89,7 +105,7 @@ void setup()
      servos[i].write(currentAngle[i]);  
   }
   
-
+  //nh.getHardware()->setBaud(9600);
   nh.initNode();        //creates a node that is the arduino
   nh.subscribe(servoSubscriber);
   nh.advertise(testMessage);
@@ -100,8 +116,7 @@ void setup()
 
 void loop()
 { 
-  //servos[5].write(desiredAngle[5]);
-  
+
   for (int i = 0; i < arraySize; i++)
   {
     if (currentAngle[i] < desiredAngle[i])
@@ -114,21 +129,25 @@ void loop()
       currentAngle[i] -= stepSize[i];
       servos[i].write(currentAngle[i]);
     }
-
+    else
+    {
+      servos[i].write(currentAngle[i]);
+    }
+    
     //servos[i].write(desiredAngle[i]);
     
-  /*  debug.ID=i;
-    debug.stepSize=stepSize[i];
-    debug.angle=currentAngle[i];
-    servomessage.publish(&debug);
+    //debug.ID=i;
+    //debug.stepSize=stepSize[i];
+    //debug.angle=currentAngle[i];
+    //servomessage.publish(&debug);
     
-    nh.spinOnce();
-    */
+    //nh.spinOnce();
+
     delay(0);
   }
-  
-  testMessage.publish(&message);  
-  
+
+  //testMessage.publish(&message);  
+
   //message.data = "yo";
 
   delay(10);
