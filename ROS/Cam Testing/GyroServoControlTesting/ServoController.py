@@ -97,11 +97,11 @@ if __name__ == '__main__':
 					stepServoMessage[legID] = Vector3(1, 1, 1)
 				
 					#Send over ROS
-					print 'sent command for ' + str(legID)
+					#print 'sent command for ' + str(legID)
 					controller.SendMessage(moveServoMessages, stepServoMessage)
 			
-			time.sleep(command.timeToExecute/1000)
-				#time.sleep(3)
+			#time.sleep(command.timeToExecute/1000)
+			time.sleep(.2)
 
 			
 		except rospy.ROSInterruptException:

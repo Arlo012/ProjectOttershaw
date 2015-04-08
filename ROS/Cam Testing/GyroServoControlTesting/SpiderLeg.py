@@ -110,6 +110,10 @@ class Vector3:
     def Print(self):
         print str(self.x) + ", " + str(self.y) + ", " + str(self.z)
         
+    def GetPrintString(self):
+    	string = '(' + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ')'
+    	return string
+        
 class MoveCommand:
     '''
     A series of coordinates for each leg to move.

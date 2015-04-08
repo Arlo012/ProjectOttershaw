@@ -68,24 +68,24 @@ void setup()
   servos[11].attach(19);
 
   //Leg 5
-  servos[12].attach(20);
-  servos[13].attach(21);
-  servos[14].attach(22);
+  servos[12].attach(23);
+  servos[13].attach(25);
+  servos[14].attach(27);
 
   //Leg 6
-  servos[15].attach(23);
-  servos[16].attach(24);
-  servos[17].attach(25);
+  servos[15].attach(29);
+  servos[16].attach(31);
+  servos[17].attach(33);
 
   //Leg 7
-  servos[18].attach(26);
-  servos[19].attach(27);
-  servos[20].attach(28);
+  servos[18].attach(22);
+  servos[19].attach(24);
+  servos[20].attach(26);
 
   //Leg 8
-  servos[21].attach(29);
+  servos[21].attach(28);
   servos[22].attach(30);
-  servos[23].attach(31);
+  servos[23].attach(32);
 
 
   for (int i = 0; i < arraySize; i++)
@@ -116,7 +116,6 @@ void setup()
 
 void loop()
 { 
-
   for (int i = 0; i < arraySize; i++)
   {
     if (currentAngle[i] < desiredAngle[i])
@@ -145,7 +144,6 @@ void loop()
 
     delay(0);
   }
-
   //testMessage.publish(&message);  
 
   //message.data = "yo";
