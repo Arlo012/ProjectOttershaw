@@ -2,6 +2,7 @@ import rospy
 import math
 import time
 import numpy as np
+from std_msgs.msg import String
 from LegMover import *
 from SpiderLeg import SpiderLeg as leg
 from SpiderLeg import Servo
@@ -10,12 +11,37 @@ from SpiderLeg import MoveCommand
 from ottershaw_masta.msg import Servo as servoMsg
 
 class ServoController:
+	
+	#Allowed movement commands
+	AllowedCommands = ['Forward', 'Back', 'Left', 'Right', 'Up', 'Down', 'Stand']
 
 	def __init__(self):
-		#self.servoPublisher = rospy.Publisher('ServoSpeed', ServoArrayMsg, queue_size = 10)
 		self.servoMovePublisher = rospy.Publisher('ServoMove', servoMsg, queue_size = 10)
-		rospy.init_node('ServoController', anonymous = True)  #were we to import this as a class to a main IO handler file, this line might cause issues, in which case it should work to simply remove it
+		rospy.init_node('ServoController', anonymous = True)
+		
+		#Setup listener for remote control
+		rospy.Subscriber('servo', String, self.ReceiveCommand)
 
+	'''
+	Process keyboard commands sent over ROS. 
+	Requires the legMover object to be initialized
+	'''
+	def ReceiveCommand(self, direction):
+		try:
+			if direction.data in ServoController.AllowedCommands:
+				self.legMover.SetMovementCommand(direction.data)
+		except:
+			print 'WARNING: LegMover not initialized. Could not send command'
+	
+	'''
+	Define instance of LegMover object for remote controlling
+	'''
+	def SetLegMoverObject(self, legMover):
+		self.legMover = legMover
+	
+	'''
+	Create and send a servo move message and send over ROS
+	'''
 	def SendMessage(self, moveArray, servoStep):
 		if not rospy.is_shutdown():
 			for key in moveArray:
@@ -52,25 +78,29 @@ if __name__ == '__main__':
 		legToBuild = leg(i, servoSetup1, servoSetup2, servoSetup3)
 		legs.append(legToBuild)
 
-	'''
-	Setup all step commands, labeled
-	x/y/z coordinates relative to leg to move: +x = outward, +y = forward, +z = down
-	'''
-	#Create object to handle leg walking algorithm
+	#Create object to handle leg walking algorithm. This is needed for the controller
 	legMover = LegMover(legs)
+	controller.SetLegMoverObject(legMover)
+	print 'Info: Leg mover initialized'
 
+	'''
+	Main loop: While roscore running:
+		1. Get a set of commands from the legMover class
+		2. Process each command in that command set
+			- The command will have a mapping of legID : coordinate
+			- Go through each of these mappings, generate angles, and append them to the messages to send
+		3. Send the messages for that command set over ROS
+		4. Delay before processing next command set
+	'''
 	while True:
 		try:
 			#A set of commands to be executed in parallel
-			commandSet = legMover.GetNextCommandSet()	#Get next array of move commands
+			commandSet = legMover.GetNextCommandSet()	#Get next list of move commands
 			for command in commandSet:
 				moveServoMessages = {}	#Dictionary of angles to send over to Arduino mapped by leg ID
 				stepServoMessage = {}	#Dictionary of step sizes for Arduino servo mapped by leg ID
 				
-				for legID in command.coordinatesToMove:	#Iterate through each command
-					
-					#print legID
-					
+				for legID in command.coordinatesToMove:		#Iterate through each command
 					#Update leg positions by mapping
 					legs[legID-1].UpdateDesiredPosition(command.coordinatesToMove[legID])
 					
@@ -82,9 +112,6 @@ if __name__ == '__main__':
 					anglesToSend.y = anglesToSend.y + calibratedOffsets[legID].y
 					anglesToSend.z = anglesToSend.z + calibratedOffsets[legID].z
 						
-					#Debug
-					#anglesToSend.Print()
-						
 					#Update servo objects to hold these angles accounting for calibration offset
 					legs[legID-1].servo1.angle = anglesToSend.x
 					legs[legID-1].servo2.angle = anglesToSend.y
@@ -94,15 +121,16 @@ if __name__ == '__main__':
 					moveServoMessages[legID] = Vector3(anglesToSend.x, anglesToSend.y, anglesToSend.z)
 					
 					#Append 3 step size orders
-					stepServoMessage[legID] = Vector3(1, 1, 1)
+					stepServoMessage[legID] = Vector3(1,1,1)
 				
 					#Send over ROS
-					#print 'sent command for ' + str(legID)
 					controller.SendMessage(moveServoMessages, stepServoMessage)
 			
+			#Delay between each command
 			#time.sleep(command.timeToExecute/1000)
 			time.sleep(.2)
 
 			
 		except rospy.ROSInterruptException:
 			pass
+		

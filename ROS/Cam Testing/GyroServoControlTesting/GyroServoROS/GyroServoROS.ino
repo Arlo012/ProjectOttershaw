@@ -20,7 +20,7 @@ ros::Publisher servomessage("legs", &debug);
 
 void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 {
-  //digitalWrite(8, HIGH);
+  digitalWrite(8, HIGH);
   if(servoAngleSafe(servoInfo.ID, servoInfo.angle))
   {
     desiredAngle[servoInfo.ID] = servoInfo.angle;
@@ -29,11 +29,12 @@ void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 
 }
 
+
 boolean servoAngleSafe(int ID, int angle)
 {
   if(ID == 1 || ID == 4 || ID == 7 || ID == 10 || ID == 13 || ID == 16 || ID == 19 || ID == 22)
   {
-    if(angle < 13)
+    if(angle < 10)
     {
       return false;
     }
