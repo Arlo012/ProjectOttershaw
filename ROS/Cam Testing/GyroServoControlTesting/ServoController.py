@@ -12,8 +12,9 @@ from ottershaw_masta.msg import Servo as servoMsg
 
 class ServoController:
 	
-	#Allowed movement commands
-	AllowedCommands = ['Forward', 'Back', 'Left', 'Right', 'Up', 'Down', 'Stand']
+	#Defined commands in 'boris_teleop_publisher' that we expect to receive over ROS 
+	AllowedCommands = ['Forward', 'Back', 'StrafeLeft', 'StrafeRight', 
+						'Up', 'Down', 'Stand', 'SpinRight', 'SpinLeft', 'Freeze']
 
 	def __init__(self):
 		self.servoMovePublisher = rospy.Publisher('ServoMove', servoMsg, queue_size = 10)
@@ -79,9 +80,10 @@ if __name__ == '__main__':
 		legs.append(legToBuild)
 
 	#Create object to handle leg walking algorithm. This is needed for the controller
-	legMover = LegMover(legs)
+	print '[INFO] Initializing leg mover...'
+	legMover = LegMover(legs, 'Standard', calibrationMode=False)
 	controller.SetLegMoverObject(legMover)
-	print 'Info: Leg mover initialized'
+	print '[INFO] ...Leg mover successfully initialized'
 
 	'''
 	Main loop: While roscore running:
@@ -105,7 +107,12 @@ if __name__ == '__main__':
 					legs[legID-1].UpdateDesiredPosition(command.coordinatesToMove[legID])
 					
 					#Calculate angles for these 3 servos 
-					anglesToSend = legs[legID-1].GetAngles()
+					try:
+						anglesToSend = legs[legID-1].GetAngles()
+					except Exception as e:
+						print 'Error calculating angles: ' + str(e)
+						#TODO: intelligent error handling here... need to reset robot to standing
+						
 					
 					#Update each servo with its associated offset
 					anglesToSend.x = anglesToSend.x + calibratedOffsets[legID].x
@@ -128,7 +135,7 @@ if __name__ == '__main__':
 			
 			#Delay between each command
 			#time.sleep(command.timeToExecute/1000)
-			time.sleep(.2)
+			time.sleep(.3)
 
 			
 		except rospy.ROSInterruptException:

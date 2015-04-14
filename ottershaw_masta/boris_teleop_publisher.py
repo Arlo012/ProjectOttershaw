@@ -25,24 +25,24 @@ def talker():
         if key == ord('w'):#curses.KEY_UP: 
             #stdscr.addstr(2, 20, "Up")
             stringToSend = "Forward"
-        elif key == ord('s'):#curses.KEY_DOWN: 
-            #stdscr.addstr(3, 20, "Down")
+        elif key == ord('s'):
             stringToSend = "Back"
-        elif key == ord('a'):#curses.KEY_LEFT:     
-            #stdscr.addstr(3, 20, "Down")
+        elif key == ord('a'):  
             stringToSend = "StrafeLeft"
-        elif key == ord('d'):#curses.KEY_RIGHT: 
-            #stdscr.addstr(3, 20, "Down")
+        elif key == ord('d'):
             stringToSend = "StrafeRight"
-        elif key == ord('z'):#curses.KEY_RIGHT: 
-            #stdscr.addstr(3, 20, "Down")
+        elif key == ord('z'):
             stringToSend = "Down"
-        elif key == ord('x'):#curses.KEY_RIGHT: 
-            #stdscr.addstr(3, 20,UP "Down")
+        elif key == ord('x'):
             stringToSend = "Up"
-        elif key == ord('p'):#curses.KEY_RIGHT: 
-            #stdscr.addstr(3, 20, "Down")
+        elif key == ord('p'):
             stringToSend = "Stand"
+        elif key == ord('q'):
+            stringToSend = "SpinLeft"
+        elif key == ord('e'):
+            stringToSend = "SpinRight"
+        elif key == ord('f'):
+            stringToSend = "Freeze"
         #Task 1
         else:
             stringToSend = "STANDBY........"

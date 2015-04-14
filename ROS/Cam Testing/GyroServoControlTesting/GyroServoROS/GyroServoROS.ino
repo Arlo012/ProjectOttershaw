@@ -18,6 +18,7 @@ ottershaw_masta::Servo debug;
 ros::Publisher testMessage("messageRecieved", &message);
 ros::Publisher servomessage("legs", &debug);
 
+
 void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 {
   digitalWrite(8, HIGH);
@@ -31,14 +32,14 @@ void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 
 
 boolean servoAngleSafe(int ID, int angle)
-{
+{/*
   if(ID == 1 || ID == 4 || ID == 7 || ID == 10 || ID == 13 || ID == 16 || ID == 19 || ID == 22)
   {
     if(angle < 10)
     {
       return false;
     }
-  }
+  }*/
   return true;
 }
 
@@ -100,6 +101,8 @@ void setup()
   desiredAngle[3] = 100;
   currentAngle[6] = 80;
   desiredAngle[6] = 80;
+  currentAngle[22] = 80;
+  desiredAngle[22] = 80;
   
   for (int i = 0; i < arraySize; i++)
   {

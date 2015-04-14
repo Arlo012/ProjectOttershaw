@@ -115,6 +115,14 @@ class Vector3:
 		self.y += vector.y
 		self.z += vector.z
 	
+	'''
+	Scale the vector's x/y/z
+	'''
+	def Scale(self, x_scale, y_scale, z_scale):
+		self.x *= x_scale
+		self.y *= y_scale
+		self.z *= z_scale
+	
 	def Print(self):
 		print str(self.x) + ", " + str(self.y) + ", " + str(self.z)
 		
