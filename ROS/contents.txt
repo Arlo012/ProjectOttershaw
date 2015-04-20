@@ -1,0 +1,11 @@
+Movement:
+	|- Leg definitions
+	|- Inverse kinematics
+	|- ROS listener for keyboard input
+	|- ROS talker for servo angle and speed output
+
+Sensors
+	|- Listeners for all sensor types
+
+Control 
+	|- ROS talker for keyboard control
