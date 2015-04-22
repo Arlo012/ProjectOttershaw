@@ -52,7 +52,6 @@ def talker():
         #Service -- TBD. Need to first merge catkin workspace to git directory
         
         #Task 3
-        
         rate.sleep()
     curses.endwin()
 if __name__ == '__main__':
