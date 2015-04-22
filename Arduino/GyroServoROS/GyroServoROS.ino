@@ -50,45 +50,45 @@ void setup()
   //pinMode(8, OUTPUT);
 
   //Leg 1
-  servos[0].attach(3);
-  servos[1].attach(4);
-  servos[2].attach(5);
+  servos[0].attach(24);
+  servos[1].attach(22);
+  servos[2].attach(26);
+
 
   //Leg 2
-  servos[3].attach(9);
-  servos[4].attach(10);
-  servos[5].attach(13);
+  servos[3].attach(28);
+  servos[4].attach(30);
+  servos[5].attach(32);
 
   //Leg 3
-  servos[6].attach(14);
-  servos[7].attach(15);
-  servos[8].attach(16);
+  servos[6].attach(36);
+  servos[7].attach(34);
+  servos[8].attach(38);
 
   //Leg 4
-  servos[9].attach(18);
-  servos[10].attach(19);
-  servos[11].attach(20);
+  servos[9].attach(27);
+  servos[10].attach(29);
+  servos[11].attach(31);
 
   //Leg 5
-  servos[12].attach(23);
-  servos[13].attach(25);
-  servos[14].attach(27);
+  servos[12].attach(37);  
+  servos[13].attach(35);  
+  servos[14].attach(33);
 
   //Leg 6
-  servos[15].attach(29);
-  servos[16].attach(31);
-  servos[17].attach(33);
+  servos[15].attach(39);
+  servos[16].attach(41);
+  servos[17].attach(40);
 
   //Leg 7
-  servos[18].attach(22);
-  servos[19].attach(24);
-  servos[20].attach(26);
+  servos[18].attach(23);
+  servos[19].attach(25);
+  servos[20].attach(53);
 
   //Leg 8
-  servos[21].attach(28);
-  servos[22].attach(30);
-  servos[23].attach(32);
-
+  servos[21].attach(49);
+  servos[22].attach(51);
+  servos[23].attach(47);
 
   for (int i = 0; i < arraySize; i++)
   {
@@ -97,17 +97,17 @@ void setup()
   }    
   
   //Arduino collision prevention offset
-  currentAngle[3] = 100;
-  desiredAngle[3] = 100;
-  currentAngle[6] = 80;
-  desiredAngle[6] = 80;
-  currentAngle[22] = 80;
-  desiredAngle[22] = 80;
+  currentAngle[1] = 95;
+  desiredAngle[1] = 95;
+  currentAngle[21] = 85;
+  desiredAngle[21] = 85;
   
   for (int i = 0; i < arraySize; i++)
   {
      servos[i].write(currentAngle[i]);  
   }
+  
+  delay(1000);
   
   //nh.getHardware()->setBaud(9600);
   nh.initNode();        //creates a node that is the arduino
@@ -163,6 +163,5 @@ void loop()
 
   delay(10);
   nh.spinOnce();
-
 }
 

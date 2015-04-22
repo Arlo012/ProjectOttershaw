@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import rospy
 import math
 import time
@@ -18,12 +19,17 @@ class ServoController:
 						'Up', 'Down', 'Stand', 'SpinRight', 'SpinLeft', 'Freeze']
 
 	def __init__(self):
+		#Servo angles and step size messages, publisher
 		self.servoMovePublisher = rospy.Publisher('ServoMove', servoMsg, queue_size = 10)
-		rospy.init_node('ServoController', anonymous = True)
 		
 		#Setup listener for remote control
 		rospy.Subscriber('servo', String, self.ReceiveCommand)
 		print '[INFO] Initialized remote controller ROS listener'
+		
+		#Setup debug channel for publishing
+		self.debugChannel = rospy.Publisher('Debug', String)
+		
+		rospy.init_node('ServoController', anonymous = True)
 
 	'''
 	Process keyboard commands sent over ROS. 
@@ -38,6 +44,12 @@ class ServoController:
 		except:
 			print "[ERROR] Unexpected error while generating movement command:", sys.exc_info()[0]
 
+	'''
+	Get a pointer to the debug channel to pass around to other objects
+	for debugging
+	'''
+	def GetDebugChannel(self):
+		return self.debugChannel
 	
 	'''
 	Define instance of LegMover object for remote controlling
@@ -66,7 +78,7 @@ class ServoController:
 						msg.angle = moveArray[key].z
 						msg.stepSize = servoStep[key].z
 					else:
-						print 'wtf'
+						self.debugChannel.publish('wtf')
 					
 					self.servoMovePublisher.publish(msg)
 					time.sleep(0.003)			#Must delay between each write
@@ -85,10 +97,10 @@ if __name__ == '__main__':
 		legs.append(legToBuild)
 
 	#Create object to handle leg walking algorithm. This is needed for the controller
-	print '[INFO] Initializing leg controller object...'
-	legMover = LegMover(legs, 'Standard', calibrationMode=False)
+	controller.debugChannel.publish('[INFO] Initializing leg controller object...')
+	legMover = LegMover(legs, controller.GetDebugChannel(), 'Standard', calibrationMode=False)
 	controller.SetLegMoverObject(legMover)
-	print '[INFO] ...Leg controller successfully initialized'
+	controller.debugChannel.publish('[INFO] ...Leg controller successfully initialized')
 
 	'''
 	Main loop: While roscore running:
@@ -115,8 +127,7 @@ if __name__ == '__main__':
 					try:
 						anglesToSend = legs[legID-1].GetAngles()
 					except Exception as e:										
-						print 'Error calculating angles: ' + str(e)
-						print ''
+						controller.debugChannel.publish('[ERROR] Error calculating angles: ' + str(e))
 					
 					#Update each servo with its associated offset
 					anglesToSend.x = anglesToSend.x + calibratedOffsets[legID].x

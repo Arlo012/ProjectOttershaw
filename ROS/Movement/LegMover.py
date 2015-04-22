@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from SpiderLeg import MoveCommand
 from SpiderLeg import Vector3
 import copy
@@ -9,41 +10,44 @@ Implements basic forward walking motion on a flat surface
 '''
 
 #Starting point from which to base the standing coordinate
-baseCoor = Vector3(15, 0, 12)	#90, 90, 90 at (13.4, 0, 21.2)
+baseCoor = Vector3(16, 0, 5)	#90, 90, 90 at (13.4, 0, 21.2)
 
 #Alternating positive/negative standing offset
-splayFactor = 5		#How far legs splay apart in standing position
+splayFactor = 5		#How far legs splay apart in standing position (warning: if >10, will collide)
 
-#Note that these standing coordinates are in local leg coordinates, not body coordinates
-standingCoordinates = {1: Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),	#Leg1
-			2 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),   		#Leg2
-			3 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg3
-			4 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),			#Leg4
-			5 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg5
-			6 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),			#Leg6
-			7 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg7
-			8 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0))			#Leg8		
-}
+# Note that these standing coordinates are in local leg coordinates, not body coordinates
+standingCoordinates = {
+ 			1: Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),				#Leg1
+ 			2 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),   		#Leg2
+ 			3 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg3
+ 			4 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),			#Leg4
+ 			5 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg5
+ 			6 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0)),			#Leg6
+ 			7 : Vector3.Add(baseCoor, Vector3(0,splayFactor,0)),			#Leg7
+ 			8 : Vector3.Add(baseCoor, Vector3(0,-splayFactor,0))			#Leg8		
+ }
 
-ninetyCoordinates = {1: Vector3(13,0,21),	#Leg1
-			2: Vector3(13,0,21),			#Leg2
-			3: Vector3(13,0,21),			#Leg3
-			4: Vector3(13,0,21),			#Leg4
-			5: Vector3(13,0,21),			#Leg5
-			6: Vector3(13,0,21),			#Leg6
-			7: Vector3(13,0,21),			#Leg7
-			8: Vector3(13,0,21)				#Leg8		
+ninetyCoordinates = {
+			1: Vector3(13.4,0,21.2),		#Leg1
+			2: Vector3(13.4,0,21.2),		#Leg2
+			3: Vector3(13.4,0,21.2),		#Leg3
+			4: Vector3(13.4,0,21.2),		#Leg4
+			5: Vector3(13.4,0,21.2),		#Leg5
+			6: Vector3(13.4,0,21.2),		#Leg6
+			7: Vector3(13.4,0,21.2),		#Leg7
+			8: Vector3(13.4,0,21.2)			#Leg8		
 }
 
 #These are the angle calibrated offsets for 90 90 90 (with subtractions for offset to spread)
-calibratedOffsets = {1 : Vector3(2,5,-18), 
-			2 : Vector3(-3,2,-11),  
-			3 : Vector3(-7,-6,-2),
-			4 : Vector3(-4,0,-7),  
-			5 : Vector3(-9,-2,11),
-			6 : Vector3(-2,10,-12),
-			7 : Vector3(-1,-8,-25),
-			8 : Vector3(10,-12,-15)
+calibratedOffsets = {
+			1 : Vector3(3,11,-9), 
+			2 : Vector3(-8,17,3), 
+			3 : Vector3(-3,14,0), 
+			4 : Vector3(-6,11,7), 
+			5 : Vector3(-11,5,31), 
+			6 : Vector3(-3,6,2), 
+			7 : Vector3(-1,5,-3), 
+			8 : Vector3(6,0,0) 
 }
 
 
@@ -70,7 +74,7 @@ class Movement:
 		self.coordinatePlane = coordinatePlane
 
 #Debug & safety modes
-debugMode = False					#Explicit printouts of leg positions for debugging
+debugMode = True					#Explicit printouts of leg positions for debugging
 
 #ENABLE THIS WHEN TESTING A NEW WALKING SET
 safeAlgorithmLoopMode = False		#Always return to standard splay position at end of each movement loop
@@ -163,13 +167,17 @@ class LegMover:
 	
 	swingMotion = [Vector3(10,0,0), Vector3(-10,0,0)]	
 	
-	def __init__(self, legArray, moveMode='Standard', commandBufferSize=1, calibrationMode = False):
+	def __init__(self, legArray, debugChannel, moveMode='Standard', commandBufferSize=1, calibrationMode = False):
 		'''
 		Args:
 			legArray ([SpiderLeg]): array of SpiderLeg objects to act upon
+			debugChannel (rospy node): instance of the debug publisher for logging
 			moveMode: 'Standard' or 'PacMan' -- move one command at a time, or continuously in a direction (respectively)
+			commandBufferSize (int): How long the deque for commands received from controller is. Longer = less responsive, shorter will drop commands
+			calibrationMode (boolean): Whether the legs sh ould be locked to calibration mode on startup
 		'''
 		self.spiderLegs = legArray
+		self.debugChannel = debugChannel
 		self.currentLegCoordinates = copy.deepcopy(standingCoordinates)  #Default coordinates to standing position
 		self.legMovementDictToProcess = 0				#Which legMovementDict we are accessing
 		self.nextMotionIndex = 0						#Which motion within each differential movement array we are at
@@ -181,16 +189,16 @@ class LegMover:
 		self.calibrationMode = calibrationMode
 		
 		
-		#Print out all relevant configurations
-		print '[CONFIG] Current movement mode is ' + self.moveMode
+		#self.debugChannel.publish(out all relevant configurations
+		self.debugChannel.publish('[CONFIG] Current movement mode is ' + self.moveMode)
 		if self.calibrationMode:
-			print '[CONFIG] Currently in calibration mode (robot will 90/90/90 his legs, regardless of orders)'
+			self.debugChannel.publish('[CONFIG] Currently in calibration mode (robot will 90/90/90 his legs, regardless of orders)')
 		if debugMode:
-			print '[CONFIG] LegMover debug mode is initialized! Verbose logging enabled.'
+			self.debugChannel.publish('[CONFIG] LegMover debug mode is initialized! Verbose logging enabled.')
 		else:
-			print '[CONFIG] LegMover debug mode disabled. Verbose logging will not be provided.'
+			self.debugChannel.publish('[CONFIG] LegMover debug mode disabled. Verbose logging will not be provided.')
 		if safeAlgorithmLoopMode:
-			print '[CONFIG] Algorithm safety loop mode enabled. This will force the robot to return to standing after each motion.'
+			self.debugChannel.publish('[CONFIG] Algorithm safety loop mode enabled. This will force the robot to return to standing after each motion.')
 		
 		'''
 		Goal: Above we have lists of differential motions. Next, map these motions in a given order against 
@@ -327,12 +335,16 @@ class LegMover:
 		#LIFO on all commands (only relevant in standard movement mode)
 		self.commandQueue = deque(maxlen=commandBufferSize)
 		
-		#Default, sit down. This is the dictionary processed in the main GetNextCommandSet() loop
-		self.legMovementDicts = sitDownMovements	#HACK: This isn't working quite right at boot, but gets the job done
+		self.legMovementDicts = doNothingMovements
+		self.previousCommand = 'Nothing'
 		
-		#Set safe default position to sitting down
-		self.previousCommand = 'Down'
-
+		'''
+		#Default, sit down. This is the dictionary processed in the main GetNextCommandSet() loop
+		else:			#Stand up
+			self.legMovementDicts = sitDownMovements	#HACK: This isn't working quite right at boot, but gets the job done
+			#Set safe default position to sitting down
+			self.previousCommand = 'Down'
+		'''
 		#Flags for safe walking testing & PacMan mode - Reset to standing after new command flag is set
 		self.resetOnceFlag = False
 		self.standingMode = False
@@ -344,30 +356,30 @@ class LegMover:
 		Forward, Back, Left, Right, SpinLeft, SpinRight, Up, Down, Stand
 	'''
 	def SetMovementCommand(self, command):
-		print '[INFO] New movement command: ' + command
+		self.debugChannel.publish('[INFO] New movement command: ' + command)
 		
 		#Try finding a match between this command and the dictionary of available commands
 		try:
 			commandLookup = self.commandLegMovementDict[command]		#Lookup command in commandLegMovementDict
-			print '[INFO] Received valid move command'
+			self.debugChannel.publish('[INFO] Received valid move command')
 			
 			#Catch special freeze/ stand up command
 			if command == 'Freeze':
-				print '[INFO] Received emergency freeze command'
+				self.debugChannel.publish('[INFO] Received emergency freeze command')
 				self.legMovementDicts = self.commandLegMovementDict['Nothing']
 				
 			if command == 'Stand':
-				print '[INFO] Stand command received. Robot resetting to standing position'
+				self.debugChannel.publish('[INFO] Stand command received. Robot resetting to standing position')
 				self.resetOnceFlag = True	
 		except:
-			print '[WARNING] Invalid movement command sent to robot'
+			self.debugChannel.publish('[WARNING] Invalid movement command sent to robot')
 			return
 		
 		#Found command, process based on moveMode
 		if self.moveMode is 'PacMan':		#Ignore the command queue -- this command is now all we care about
 			self.resetOnceFlag = True		#For safety, return to the standing position first
 			if command == 'Stand':
-				print '[INFO] Stand command received. Robot returning to standing position'
+				self.debugChannel.publish('[INFO] Stand command received. Robot returning to standing position')
 				self.standingMode = True
 			else:
 				self.standingMode = False
@@ -377,19 +389,19 @@ class LegMover:
 			#Check if this command is dangerous to follow the previous command. Big switch, basically
 			if command == 'Up':
 				if self.previousCommand != 'Down':			#Not safe to stand up *twice*
-					print '[WARNING] Requested two sequential stand up commands. Unsafe movement - command rejected'
+					self.debugChannel.publish('[WARNING] Requested two sequential stand up commands. Unsafe movement - command rejected')
 					return
 			if self.previousCommand == 'Down':
 				if command != 'Up':
-					print '[WARNING] Requested invalid movement while sitting. Unsafe - command rejected'
+					self.debugChannel.publish('[WARNING] Requested invalid movement while sitting. Unsafe - command rejected')
 					return
 			
 			self.previousCommand = command			#This was a valid command, passed above checks
-			print '[INFO] Appended valid command to queue'
+			self.debugChannel.publish('[INFO] Appended valid command to queue')
 			self.commandQueue.append(commandLookup)	#Append to 'right' of queue, get from 'left'
 		
 		else:
-			print '[ERROR] Tried to set a movement command with uninitialized or invalid movement mode.'
+			self.debugChannel.publish('[ERROR] Tried to set a movement command with uninitialized or invalid movement mode.')
 			return
 	
 	'''
@@ -401,10 +413,9 @@ class LegMover:
 		commandSet = []		 #List of MoveCommand objects to return
 		
 		if debugMode:
-			print '[INFO] Current leg coordinates:'
+			self.debugChannel.publish('[INFO] Current leg coordinates:')
 			for leg in self.currentLegCoordinates:
-				self.currentLegCoordinates[leg].Print()
-			print
+				self.currentLegCoordinates[leg].GetPrintString()
 		
 		#90/90/90 calibration mode
 		if self.calibrationMode:
@@ -412,13 +423,13 @@ class LegMover:
 		
 		#Stand up mode
 		if self.standingMode:
-			print '[INFO] {DEPRECATED} I am standing. Note this functionality is to be phased out'
+			self.debugChannel.publish('[INFO] {DEPRECATED} I am standing. Note this functionality is to be phased out')
 			self.currentLegCoordinates = copy.deepcopy(standingCoordinates)
 			return self.GetStandCommand()
 		
 		#Stand coordinates for transitioning between commands
 		elif self.resetOnceFlag:
-			print '[INFO] Resetting to standing for new command'
+			self.debugChannel.publish('[INFO] Resetting to standing for new command')
 			self.currentLegCoordinates = copy.deepcopy(standingCoordinates)
 			self.resetOnceFlag = False
 			return self.GetStandCommand()
@@ -430,7 +441,7 @@ class LegMover:
 				
 			if self.moveMode is 'PacMan':				#Loop movement continuously
 				if safeAlgorithmLoopMode:	#Reset to standing position
-					print '[INFO] Reset to standing position'
+					self.debugChannel.publish('[INFO] Reset to standing position')
 					self.currentLegCoordinates.clear()
 					self.currentLegCoordinates = copy.deepcopy(standingCoordinates)		#Create deep (by-value) copy and replace current dictionary
 					return self.GetStandCommand()	#Reset to normal standing position
@@ -442,16 +453,16 @@ class LegMover:
 					#Grab next command from the queue
 					self.legMovementDicts = self.commandQueue.popleft()		#Pop from left, put to right (see set commands)
 					if debugMode:
-						print '[INFO] Got next command in queue, ' + str(len(self.commandQueue)) + ' commands to go'
+						self.debugChannel.publish('[INFO] Got next command in queue, ' + str(len(self.commandQueue)) + ' commands to go')
 				
 				else:
 					if debugMode:
-						print '[INFO] No movements to execute'
+						self.debugChannel.publish('[INFO] No movements to execute')
 					self.legMovementDicts = self.commandLegMovementDict['Nothing']
 				return self.GetNextCommandSet()
 			
 			else:
-				print '[ERROR] Invalid movement mode of: ' + self.moveMode + '. Returning to standing coordinates'
+				self.debugChannel.publish('[ERROR] Invalid movement mode of: ' + self.moveMode + '. Returning to standing coordinates')
 				return self.GetStandCommand()
 		
 		else:		#Execute the movement commands mapped in legMovementDicts
@@ -481,16 +492,15 @@ class LegMover:
 						commandSet.append(command)		#Append to the command set to return
 						
 						if debugMode:
-							cmdPrint = adjustedMoveVector.GetPrintString()
-							print 'Leg ' + str(leg) + ' differential command: ' + cmdPrint
+							cmdToPrint = moveVector.GetPrintString()
+							self.debugChannel.publish('Leg ' + str(leg) + ' differential command: ' + cmdToPrint)
 				
 				if debugMode:		
-					print 'All commands created for leg set : ' + str(legs)
-					print 
+					self.debugChannel.publish('All commands created for leg set : ' + str(legs))
 			self.nextMotionIndex += 1			#Increment which motion we are doing in the differential array
 			if allMovementsComplete:			#Complete whole for loop with no new movements -- go to next leg set
 				if debugMode:
-					print 'All movements complete'
+					self.debugChannel.publish('All movements complete')
 				self.nextMotionIndex = 0
 				self.legMovementDictToProcess += 1
 			return commandSet			
@@ -515,7 +525,7 @@ class LegMover:
 	Return a command containing only the current leg coordinates (do nothing)
 	'''
 	def GetEmptyCommand(self):
-		print 'Info: Executing GetEmptyCommand() - please verify working correctly'
+		self.debugChannel.publish('Info: Executing GetEmptyCommand() - TODO:  Please verify working correctly')
 		nothingCommand = []
 		nothingCommand.append(MoveCommand('Nothing', self.currentLegCoordinates, 1000))
 		return nothingCommand
