@@ -25,20 +25,21 @@ def JoyTalker():
        11: "StrafeLeft",
        3 : "Up",
        2 : "Down",
-       7: "Stand"}
+       7: "Stand"}    
+    
     '''
-    full    forward -32767
-            back    32767
-            right   32767
-            left    -32767
-    half    forward -16384
-            back    16384
-            right   16384
-            left    -16384
-    Quarter forward -8192
-            back    8192
-            right   8192
-            left    -8192   
+    full -y   forward -32767 -1
+         +y   back    32767  .99
+         +x   right   32767   .99
+         -x   left    -32767 -1
+    half    forward -16384   -.5
+            back    16384   .495
+            right   16384    .495
+            left    -16384   -5
+    Quarter forward -8192    -.25 
+            back    8192     .24
+            right   8192    .24
+            left    -8192   -.25
     '''
     # for al the connected joysticks
     for i in range(0, pygame.joystick.get_count()):
@@ -49,33 +50,56 @@ def JoyTalker():
         # print a statement telling what the name of the controller is
         print "Detected joystick '",joysticks[-1].get_name(),"'"
     while keepPlaying:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        pygame.event.pump
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
                 print "Received event 'Quit', exiting."
                 keepPlaying = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            elif e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
                 print "Escape key pressed, exiting."
                 keepPlaying = False
-            elif event.type == pygame.JOYBUTTONDOWN:
+            elif e.type == pygame.JOYBUTTONDOWN:
                 #print x[event.button]
                 print "Joystick '",joysticks[event.joy].get_name(),"' button",event.button,"down."
-            elif event.type == pygame.JOYBUTTONUP:
+            elif e.type == pygame.JOYBUTTONUP:
                 print "_"
                 #print event.button, "up"
                 print "Joystick '",joysticks[event.joy].get_name(),"' button",event.button,"up."
-            elif event.type == pygame.JOYHATMOTION:
+            elif e.type == pygame.JOYHATMOTION:
                 print "Joystick '",joysticks[event.joy].get_name(),"' hat",event.hat," moved."
-            elif event.type == pygame.JOYAXISMOTION:
+            elif e.type == pygame.JOYAXISMOTION:
                 #print "Joystick '",joysticks[event.joy].get_name(),"' axis",event.axis,"motion."
-                if event.axis==0 or event.axis==1:
-                    xAxis=joysticks[0].get_axis(0)
+                if e.axis==0 or e.axis==1:
+                    xAxis=joysticks[0].get_axis(0)*100
+                    yAxis=-(joysticks[0].get_axis(1)*100)
                     print xAxis,"--x--"
-                    yAxis=joysticks[0].get_axis(1)
                     print yAxis,"--y--"
-                    if xAxis > -8192 and xAxis < 8192 and yAxis > -8192 and yAxis > 8192:# stand
-                        print x[7]
-                    elif xAxis > -5000 and xAxis < 5000 and yAxis > 8192 and yAxis > 16384:
-                        pass
+                    if xAxis > -28.0 and xAxis < 23.0 and yAxis <= 16.5 and yAxis > -24.0:# stand
+                         print x[7]
+                    if xAxis > -28 and xAxis < 23 and yAxis <= 78.0 and yAxis > 16.5:#forward
+                        print x[13]
+                    if xAxis > -28.0 and xAxis < 23.0 and yAxis <= -4.0 and yAxis >= -76.0:#back
+                        print x[14]
+                    if xAxis > -72.0 and xAxis < -23.0 and yAxis <= 16.6 and yAxis >= -24.0: #left
+                        print x[11]
+                    if xAxis > 23.0  and xAxis < 72.0 and yAxis <= 16.6 and yAxis >= -24.0: #right
+                        print x[12]
+                    if xAxis > 32767  or xAxis < -32767 or yAxis > 32767 or yAxis < -32767:
+                        print "speed boost!  COMING SOON!!!"
+                    '''
+                    if xAxis > -28 and xAxis < 23 and yAxis < 16.5 and yAxis > -4:# stand
+                         print x[7]
+                    if xAxis > -28 and xAxis < 23 and yAxis < 78 and yAxis > 16.5:#forward
+                        print x[13]
+                    if xAxis > -28 and xAxis < 23 and yAxis < -4 and yAxis > -76:#back
+                        print x[14]
+                    if xAxis > -72 and xAxis < -23 and yAxis < 16.6 and yAxis > -4: #left
+                        print x[11]
+                    if xAxis > 23  and xAxis < 72 and yAxis < 16.6 and yAxis > -4: #right
+                        print x[12]
+                    if xAxis > 32767  or xAxis < -32767 or yAxis > 32767 or yAxis < -32767:
+                        print "speed boost!  COMING SOON!!!"
+                    '''
                 #if event.axis==1:
                 #    yAxis=joysticks[0].get_axis(1)
                 #    print yAxis,"--y--"         

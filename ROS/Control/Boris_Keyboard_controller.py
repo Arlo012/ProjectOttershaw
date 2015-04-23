@@ -3,16 +3,18 @@ import rospy
 from std_msgs.msg import String
 #file to class in python, python init, create instance of class in some other function, us it to call init, one function in there called moveservo, 
 import curses
-stdscr = curses.initscr()
-curses.cbreak()
-stdscr.keypad(1)
+import pygame
 
-stdscr.addstr(0,10,"USE 'ctrl + c' TO QUIT,  Control with arrow keys")
-stdscr.refresh()
+def KeyboardController():
+    stdscr = curses.initscr()
+    curses.cbreak()
+    stdscr.keypad(1)
+    
+    stdscr.addstr(0,10,"USE 'ctrl + c' TO QUIT,  Control with arrow keys")
+    stdscr.refresh()
 
-key = ''
-
-def talker():
+    key = ''
+    
     pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(100) #stops trailling commands in Subscriber
@@ -54,8 +56,9 @@ def talker():
         #Task 3
         rate.sleep()
     curses.endwin()
+    
 if __name__ == '__main__':
     try:
-        talker()
+        KeyboardController()
     except rospy.ROSInterruptException:
         pass
