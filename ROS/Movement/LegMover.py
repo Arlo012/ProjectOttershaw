@@ -10,7 +10,7 @@ Implements basic forward walking motion on a flat surface
 '''
 
 #Starting point from which to base the standing coordinate
-baseCoor = Vector3(16, 0, 5)	#90, 90, 90 at (13.4, 0, 21.2)
+baseCoor = Vector3(20, 0, 5)	#90, 90, 90 at (13.4, 0, 21.2)
 
 #Alternating positive/negative standing offset
 splayFactor = 5		#How far legs splay apart in standing position (warning: if >10, will collide)
@@ -74,7 +74,7 @@ class Movement:
 		self.coordinatePlane = coordinatePlane
 
 #Debug & safety modes
-debugMode = True					#Explicit printouts of leg positions for debugging
+debugMode = False					#Explicit printouts of leg positions for debugging
 
 #ENABLE THIS WHEN TESTING A NEW WALKING SET
 safeAlgorithmLoopMode = False		#Always return to standard splay position at end of each movement loop
@@ -133,12 +133,14 @@ class LegMover:
 	halfRevHump = [Vector3(0,-5,0)]
 	
 #Set down
-	sitDownMotion = [Vector3(0,0,-8)]
-	plusXMotion = [Vector3(5,0,-5)]
+	sitDownMotion = [Vector3(0,0,-1)]
 
 #Sit Up
-	sitUpMotion = [Vector3(0,0,8)]
-	minusXMotion = [Vector3(-5,0,5)]
+	sitUpMotion = [Vector3(0,0,1)]
+	
+#Out/in (local coordinates only)
+	plusXMotion = [Vector3(1,0,0)]
+	minusXMotion = [Vector3(-1,0,0)]
 
 #Do nothing motion (freeze the robot in current location)
 	nothingMotion = [Vector3(0,0,0)]
@@ -153,19 +155,11 @@ class LegMover:
 
 	downFiveMotion = [Vector3(0,0,5)]
 	
-#Test Motions	
-	#For stretch test
-	stretchMotion = [Vector3(0,-7.5,0)]
-	
-	#Foot stomping test
-	stompUpMotion = [Vector3(0,0,-5)]
-	stompDownMotion = [Vector3(0,0,5)]
-	
-	#Above Z test
-	holdUpMotion = [Vector3(0,0,-10)]
-	holdDownMotion = [Vector3(0,0,10)]
-	
-	swingMotion = [Vector3(10,0,0), Vector3(-10,0,0)]	
+#Rotation
+	rotateCWMotion = [Vector3(0,5,0)]
+	liftUpHighMotion = [Vector3(0,0,-5)]
+	liftDownLowMotion = [Vector3(0,0,5)]
+	rotateCCWMotion = [Vector3(0,-5,0)]
 	
 	def __init__(self, legArray, debugChannel, moveMode='Standard', commandBufferSize=1, calibrationMode = False):
 		'''
@@ -257,58 +251,80 @@ class LegMover:
 		
 		rippleForwardMovements = [ 
 			#First half
-	 		{0 : Movement(LegMover.liftUpFwdMotion, 400)},
-	 		{1 : Movement(LegMover.halfFwdHump, 500)},
-	 		{0 : Movement(LegMover.putDownFwdMotion, 400)},		
+	 		{0 : Movement(LegMover.liftUpFwdMotion, 100)},
+	 		{1 : Movement(LegMover.halfFwdHump, 100)},
+	 		{0 : Movement(LegMover.putDownFwdMotion, 100)},		
 	
 	 		#Second half
-	 		{1 : Movement(LegMover.liftUpFwdMotion, 400)},
-	 		{0 : Movement(LegMover.halfFwdHump, 500)},
-	 		{1 : Movement(LegMover.putDownFwdMotion, 400)}
+	 		{1 : Movement(LegMover.liftUpFwdMotion, 100)},
+	 		{0 : Movement(LegMover.halfFwdHump, 100)},
+	 		{1 : Movement(LegMover.putDownFwdMotion, 100)}
 		]
 		
 		rippleBackwardsMovements = [
-	 		{1 : Movement(LegMover.liftUpReverseMotion, 400)},
-	 		{0 : Movement(LegMover.halfRevHump, 500)},
-	 		{1 : Movement(LegMover.putDownReverseMotion, 400)},
+	 		{1 : Movement(LegMover.liftUpReverseMotion, 100)},
+	 		{0 : Movement(LegMover.halfRevHump, 100)},
+	 		{1 : Movement(LegMover.putDownReverseMotion, 100)},
 	 		
-	 		{0 : Movement(LegMover.liftUpReverseMotion, 400)},
-	 		{1 : Movement(LegMover.halfRevHump, 500)},
-	 		{0 : Movement(LegMover.putDownReverseMotion, 400)}
+	 		{0 : Movement(LegMover.liftUpReverseMotion, 100)},
+	 		{1 : Movement(LegMover.halfRevHump, 100)},
+	 		{0 : Movement(LegMover.putDownReverseMotion, 100)}
 		]
 		
 		strafeLeftMovements = [
-			{0: Movement(LegMover.leftStrafeLeftMotion, 400)},
-			{1: Movement(LegMover.halfLeftHump, 500)},
-			{0: Movement(LegMover.downFiveMotion, 400)},
+			{0: Movement(LegMover.leftStrafeLeftMotion, 100)},
+			{1: Movement(LegMover.halfLeftHump, 100)},
+			{0: Movement(LegMover.downFiveMotion, 100)},
 		
-			{1: Movement(LegMover.leftStrafeLeftMotion,400)},
-			{0: Movement(LegMover.halfLeftHump, 500)},
-			{1: Movement(LegMover.downFiveMotion, 400)}
+			{1: Movement(LegMover.leftStrafeLeftMotion,100)},
+			{0: Movement(LegMover.halfLeftHump, 100)},
+			{1: Movement(LegMover.downFiveMotion, 100)}
 		]
 		
 		strafeRightMovements = [
-			{0: Movement(LegMover.rightStrafeRightMotion, 400)},
-			{1: Movement(LegMover.halfRightHump, 500)},
-			{0: Movement(LegMover.downFiveMotion, 400)},
+			{0: Movement(LegMover.rightStrafeRightMotion, 100)},
+			{1: Movement(LegMover.halfRightHump, 100)},
+			{0: Movement(LegMover.downFiveMotion, 100)},
 		
-			{1: Movement(LegMover.rightStrafeRightMotion,400)},
-			{0: Movement(LegMover.halfRightHump, 500)},
-			{1: Movement(LegMover.downFiveMotion, 400)}
+			{1: Movement(LegMover.rightStrafeRightMotion,100)},
+			{0: Movement(LegMover.halfRightHump, 100)},
+			{1: Movement(LegMover.downFiveMotion, 100)}
 		]
 
 		doNothingMovements = [
-			{14 : Movement(LegMover.nothingMotion, 200)}		
+			{14 : Movement(LegMover.nothingMotion, 500)}		
 		]
 		
 		sitDownMovements = [
-			{14 : Movement(LegMover.sitDownMotion, 700)},
-			{14 : Movement(LegMover.plusXMotion, 700, 'Leg')}		#Move in local leg coordinates
+			{14 : Movement(LegMover.sitDownMotion, 5)}
 		]
 		
-		sitUpMovements = [
-			{14 : Movement(LegMover.minusXMotion, 700, 'Leg')},		#Move in local leg coordinates
-			{14 : Movement(LegMover.sitUpMotion, 700)}
+		sitUpMovements = [		
+			{14 : Movement(LegMover.sitUpMotion, 5)}
+		]
+		
+		rotateCCWMovements = [
+			{0 : Movement(LegMover.liftUpHighMotion, 100)},
+			{1 : Movement(LegMover.rotateCWMotion, 100,'Leg')},	#Move in local leg coordinates
+			{0 : Movement(LegMover.liftDownLowMotion, 100)},
+			
+			{1 : Movement(LegMover.liftUpHighMotion, 100)},
+			{0 : Movement(LegMover.rotateCWMotion, 100,'Leg')},
+			{1 : Movement(LegMover.liftDownLowMotion, 100)},
+			
+ 			{14 : Movement(LegMover.rotateCCWMotion, 100, 'Leg')}	
+		]
+		
+		rotateCWMovements = [
+			{0 : Movement(LegMover.liftUpHighMotion, 100)},   #lift the even indexed legs
+			{1 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},	 #twist the odd indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
+			{0 : Movement(LegMover.liftDownLowMotion, 100)},	 #put the even numbered legs Down
+			
+			{1 : Movement(LegMover.liftUpHighMotion, 100)},	 #lift the odd indexed legs
+			{0 : Movement(LegMover.rotateCCWMotion, 100, 'Leg')},	 #twist the even indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
+			{1 : Movement(LegMover.liftDownLowMotion, 100)},	 #put the even numbered legs Down
+							
+			{14 : Movement(LegMover.rotateCWMotion, 100, 'Leg')}	#Move in local leg coordinates
 		]
 		
 		plusXMovements = [
@@ -326,8 +342,8 @@ class LegMover:
 			'StrafeRight' : strafeRightMovements,
 			'Back' : rippleBackwardsMovements,
 			'Down' : sitDownMovements,
-			#TODO Rotate CW / CCW
-# 			'SpinLeft' : plusXMovements,
+ 			'SpinLeft' : rotateCCWMovements,
+			'SpinRight' : rotateCWMovements,
 			'Up' : sitUpMovements,
 			'Freeze' : doNothingMovements
 		}
@@ -385,17 +401,7 @@ class LegMover:
 				self.standingMode = False
 				self.legMovementDicts = commandLookup		#Ignoring queue, over-write current movement command with new one
 					
-		elif self.moveMode is 'Standard':	#Respect the command queue -- this command is added to the to-be-executed
-			#Check if this command is dangerous to follow the previous command. Big switch, basically
-			if command == 'Up':
-				if self.previousCommand != 'Down':			#Not safe to stand up *twice*
-					self.debugChannel.publish('[WARNING] Requested two sequential stand up commands. Unsafe movement - command rejected')
-					return
-			if self.previousCommand == 'Down':
-				if command != 'Up':
-					self.debugChannel.publish('[WARNING] Requested invalid movement while sitting. Unsafe - command rejected')
-					return
-			
+		elif self.moveMode is 'Standard':	#Respect the command queue -- this command is added to the to-be-executed	
 			self.previousCommand = command			#This was a valid command, passed above checks
 			self.debugChannel.publish('[INFO] Appended valid command to queue')
 			self.commandQueue.append(commandLookup)	#Append to 'right' of queue, get from 'left'
@@ -472,29 +478,34 @@ class LegMover:
 			for legSet in legMovementDict:									#Process each set of legs in the dictionary
 				legs = LegMover.moveSets[legSet]							#Get legs to operate on
 				movement = legMovementDict[legSet]							#Grab Movement instance for this leg set out of the dictionary
-				if self.nextMotionIndex < len(movement.motion):		#If there are differential movements left	
+				if self.nextMotionIndex < len(movement.motion):				#If there are differential movements left	
 					allMovementsComplete = False							#There was a movement this loop
-# 					movement =  legMovementDict[legSet]						#Grab Movement instance for this leg set out of the dictionary
-# 					moveVector = legMovementDict[legSet].motion[self.nextMotionIndex]	#Get the move vector for all legs in this set
 					moveVector = movement.motion[self.nextMotionIndex]
-					for leg in legs:											#Generate a command for each legt	
-						if movement.coordinatePlane is 'Robot':		#Build coordinate on robot plane (+x, +y absolute)
-							adjustedMoveVector = self.TransformLegDirections(leg, moveVector)		#Adjust Y coordinate appropriately
+					for leg in legs:											#Generate a command for each leg
+						if self.currentLegCoordinates[leg].z <= 15 and self.currentLegCoordinates[leg].z >= -7:				#Safety check: robot not too high/low
+							if movement.coordinatePlane is 'Robot':		#Build coordinate on robot plane (+x, +y absolute)
+								adjustedMoveVector = self.TransformLegDirections(leg, moveVector)		#Adjust Y coordinate appropriately
+								ly 
+								#Add this new movement to the current position
+								self.currentLegCoordinates[leg].AddToSelf(adjustedMoveVector)
 							
-							#Add this new movement to the current position
-							self.currentLegCoordinates[leg].AddToSelf(adjustedMoveVector)
-						
-						elif movement.coordinatePlane is 'Leg':			#Build coordinate on leg plane (+x is out from leg, +y is CW)
-							self.currentLegCoordinates[leg].AddToSelf(moveVector)
-						
-						#Create a command to move to this point
-						command = MoveCommand("LegMovement", {leg : self.currentLegCoordinates[leg]}, 1000)
-						commandSet.append(command)		#Append to the command set to return
-						
-						if debugMode:
-							cmdToPrint = moveVector.GetPrintString()
-							self.debugChannel.publish('Leg ' + str(leg) + ' differential command: ' + cmdToPrint)
-				
+							elif movement.coordinatePlane is 'Leg':			#Build coordinate on leg plane (+x is out from leg, +y is CW)
+								self.currentLegCoordinates[leg].AddToSelf(moveVector)
+							
+							
+							#Create a command to move to this point
+							command = MoveCommand("LegMovement", {leg : self.currentLegCoordinates[leg]}, movement.timeToExecute)
+							commandSet.append(command)		#Append to the command set to return
+							
+							if debugMode:
+								cmdToPrint = moveVector.GetPrintString()
+								self.debugChannel.publish('Leg ' + str(leg) + ' differential command: ' + cmdToPrint)
+						else:
+							if self.currentLegCoordinates[leg].z > 15:
+								self.currentLegCoordinates[leg].z = 15
+							elif self.currentLegCoordinates[leg].z < -7:
+								self.currentLegCoordinates[leg].z = -7
+							self.debugChannel.publish('[WARNING] Rejected movement command - Z coordinate too high')
 				if debugMode:		
 					self.debugChannel.publish('All commands created for leg set : ' + str(legs))
 			self.nextMotionIndex += 1			#Increment which motion we are doing in the differential array

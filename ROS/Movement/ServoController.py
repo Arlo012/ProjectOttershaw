@@ -36,14 +36,8 @@ class ServoController:
 	Requires the legMover object to be initialized
 	'''
 	def ReceiveCommand(self, direction):
-		try:
-			if direction.data in ServoController.AllowedCommands:
-				self.legMover.SetMovementCommand(direction.data)
-			else:
-				print '[WARNING] Issued unrecognized command. Could not send leg controller'
-		except:
-			print "[ERROR] Unexpected error while generating movement command:", sys.exc_info()[0]
-
+		self.legMover.SetMovementCommand(direction.data)
+		
 	'''
 	Get a pointer to the debug channel to pass around to other objects
 	for debugging
@@ -85,6 +79,7 @@ class ServoController:
 			time.sleep(0.005)
 
 if __name__ == '__main__':
+	print 'Starting main ServoController process...'
 	controller = ServoController()	
 	legs = []				#Create an array of leg objects (see SpiderLeg)
 
@@ -124,10 +119,7 @@ if __name__ == '__main__':
 					legs[legID-1].UpdateDesiredPosition(command.coordinatesToMove[legID])																
 					
 					#Calculate angles for these 3 servos 
-					try:
-						anglesToSend = legs[legID-1].GetAngles()
-					except Exception as e:										
-						controller.debugChannel.publish('[ERROR] Error calculating angles: ' + str(e))
+					anglesToSend = legs[legID-1].GetAngles()		#If out of bounds will throw error
 					
 					#Update each servo with its associated offset
 					anglesToSend.x = anglesToSend.x + calibratedOffsets[legID].x
@@ -148,11 +140,11 @@ if __name__ == '__main__':
 					#Send over ROS
 					controller.SendMessage(moveServoMessages, stepServoMessage)
 			
-			#Delay between each command
-			#time.sleep(command.timeToExecute/1000)
-			time.sleep(.15)
-
-			
-		except rospy.ROSInterruptException:
-			pass
+					
+			#Delay between each command - pull from the command's timeToExecute field (set by LegMover command generation)
+			delayTime = (float)(command.timeToExecute)/1000.0
+			time.sleep(delayTime)
+	
+		except Exception as e:
+			controller.debugChannel.publish('[ERROR] ' + str(e))
 		

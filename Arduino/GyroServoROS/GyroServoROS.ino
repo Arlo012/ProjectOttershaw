@@ -92,15 +92,26 @@ void setup()
 
   for (int i = 0; i < arraySize; i++)
   {
-    currentAngle[i] = 90;
-    desiredAngle[i] = 90;
+    if(i % 3 == 1)    //Angle up to prevent crashing into floor 
+    {
+      currentAngle[i] = 20;
+    }
+    else if(i % 3 == 2)    //Angle up to prevent crashing into floor 
+    {
+      currentAngle[i] = 45;
+    }
+    else
+    {
+      currentAngle[i] = 90;
+      desiredAngle[i] = 90;
+    }
+
   }    
   
   //Arduino collision prevention offset
-  currentAngle[1] = 95;
-  desiredAngle[1] = 95;
   currentAngle[21] = 85;
   desiredAngle[21] = 85;
+  
   
   for (int i = 0; i < arraySize; i++)
   {
