@@ -130,6 +130,10 @@ class Vector3:
 	def GetPrintString(self):
 		string = '(' + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ')'
 		return string
+	
+	def GetCopy(self):
+		copy = Vector3(self.x, self.y, self.z)
+		return copy
 		
 class MoveCommand:
 	'''

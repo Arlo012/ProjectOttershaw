@@ -19,7 +19,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('listener', anonymous=True)
 
-    rospy.Subscriber('servo', String, servoCall)
+    rospy.Subscriber('control', String, servoCall)
     
     rospy.spin()
 

@@ -11,32 +11,32 @@ from SpiderLeg import Servo
 from SpiderLeg import Vector3
 from SpiderLeg import MoveCommand
 from ottershaw_masta.msg import Servo as servoMsg
+import os
 
 class ServoController:
-	
-	#Defined commands in 'boris_teleop_publisher' that we expect to receive over ROS 
-	AllowedCommands = ['Forward', 'Back', 'StrafeLeft', 'StrafeRight', 
-						'Up', 'Down', 'Stand', 'SpinRight', 'SpinLeft', 'Freeze']
-
 	def __init__(self):
+		rospy.init_node('ServoController', anonymous = True)
+		
 		#Servo angles and step size messages, publisher
 		self.servoMovePublisher = rospy.Publisher('ServoMove', servoMsg, queue_size = 10)
 		
 		#Setup listener for remote control
-		rospy.Subscriber('servo', String, self.ReceiveCommand)
-		print '[INFO] Initialized remote controller ROS listener'
+		rospy.Subscriber('control', String, self.ReceiveCommand)
 		
 		#Setup debug channel for publishing
 		self.debugChannel = rospy.Publisher('Debug', String)
 		
-		rospy.init_node('ServoController', anonymous = True)
+		self.debugChannel.publish('[INFO] Initialized remote controller ROS listener')
 
 	'''
 	Process keyboard commands sent over ROS. 
 	Requires the legMover object to be initialized
 	'''
 	def ReceiveCommand(self, direction):
-		self.legMover.SetMovementCommand(direction.data)
+		try:
+			self.legMover.SetMovementCommand(direction.data)
+		except Exception as e:
+			self.debugChannel.publish('[ERROR] Command not received: ' + str(e))
 		
 	'''
 	Get a pointer to the debug channel to pass around to other objects
@@ -146,5 +146,42 @@ if __name__ == '__main__':
 			time.sleep(delayTime)
 	
 		except Exception as e:
-			controller.debugChannel.publish('[ERROR] ' + str(e))
-		
+			#Grab debug information about line number (see: http://stackoverflow.com/questions/1278705/python-when-i-catch-an-exception-how-do-i-get-the-type-file-and-line-number)
+			exc_type, exc_obj, exc_tb = sys.exc_info()
+			fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+			lineError = (exc_type, fname, exc_tb.tb_lineno)
+			controller.debugChannel.publish('[ERROR] Main command loop failure. ' + str(lineError))
+			
+			#Recover with stand command
+			commandSet = legMover.GetStandCommand()
+			for command in commandSet:
+				moveServoMessages = {}	#Dictionary of angles to send over to Arduino mapped by leg ID
+				stepServoMessage = {}	#Dictionary of step sizes for Arduino servo mapped by leg ID
+				
+				for legID in command.coordinatesToMove:		#Iterate through each command
+					#Update leg positions by mapping
+					legs[legID-1].UpdateDesiredPosition(command.coordinatesToMove[legID])																
+					
+					#Calculate angles for these 3 servos 
+					anglesToSend = legs[legID-1].GetAngles()		#If out of bounds will throw error
+					
+					#Update each servo with its associated offset
+					anglesToSend.x = anglesToSend.x + calibratedOffsets[legID].x
+					anglesToSend.y = anglesToSend.y + calibratedOffsets[legID].y
+					anglesToSend.z = anglesToSend.z + calibratedOffsets[legID].z
+						
+					#Update servo objects to hold these angles accounting for calibration offset
+					legs[legID-1].servo1.angle = anglesToSend.x
+					legs[legID-1].servo2.angle = anglesToSend.y
+					legs[legID-1].servo3.angle = anglesToSend.z
+					
+					#Append 3 angles
+					moveServoMessages[legID] = Vector3(anglesToSend.x, anglesToSend.y, anglesToSend.z)
+					
+					#Append 3 step size orders
+					stepServoMessage[legID] = Vector3(1,1,1)
+				
+					#Send over ROS
+					controller.SendMessage(moveServoMessages, stepServoMessage)
+			controller.debugChannel.publish('[WARNING] Recovered by returning to standing position')
+			

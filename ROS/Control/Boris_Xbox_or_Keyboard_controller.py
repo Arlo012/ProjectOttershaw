@@ -8,8 +8,8 @@ import pygame
 from jinja2.runtime import to_string
 
 def KeyboardController():
-    stdscr = curses.initscr()
-    curses.cbreak()
+    stdscr = curses.initscr()           #TODO document me
+    curses.cbreak()                     #all of me....
     stdscr.keypad(1)
     
     stdscr.addstr(0,10,"USE 'ctrl + c' TO QUIT,  Control with arrow keys")
@@ -17,7 +17,7 @@ def KeyboardController():
 
     key = ''
     
-    pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
+    pub = rospy.Publisher('control', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(100) #stops trailling commands in Subscriber
 
@@ -59,12 +59,15 @@ def KeyboardController():
         rate.sleep()
     curses.endwin()
     
-    
+
+'''
+    Sends over ROS control topic 'direction
+'''
 def JoySticktalker():
     pygame.init()
-    pub = rospy.Publisher('servo', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
+    pub = rospy.Publisher('control', String, queue_size=10) #This is publishing the desired servo and the angle to the servo topic. This information is then sent to the arduino and the desired servo is sent
     rospy.init_node('talker', anonymous=True)
-    rate = rospy.Rate(30) #stops trailling commands in Subscriber
+    rate = rospy.Rate(30) #stops trailing commands in Subscriber
     
     joysticks = []
     command_code_index={14: "Back",
@@ -81,7 +84,7 @@ def JoySticktalker():
 
     joysticks.append(pygame.joystick.Joystick(0))
     joysticks[0].init()
-    print "Detected COntroller:",joysticks[0].get_name(),"'"
+    print "Detected Controller:",joysticks[0].get_name(),"'"
     
     stringToSend = "_"    
     while not rospy.is_shutdown():
@@ -95,31 +98,34 @@ def JoySticktalker():
                 yAxis=-(joysticks[0].get_axis(1)*100)
                 #print xAxis,"--x--"
                 #print yAxis,"--y--"
-                if xAxis > -28.0 and xAxis < 23.0 and yAxis <= 16.5 and yAxis > -24.0:# stand
+                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= 3.5 and yAxis >= -11.0:  #Stand (dead zone)
                     stringToSend = command_code_index[7]
-                if xAxis >= -28 and xAxis <= 23 and yAxis <= 78.0 and yAxis > 20.0:#forward
-                    stringToSend = command_code_index[13]#+","+to_string(yAxis)
-                if xAxis >= -28.0 and xAxis <= 23.0 and yAxis <= -4.0 and yAxis >= -76.0:#back
-                    stringToSend = command_code_index[14]#+","+to_string(yAxis)
-                if xAxis >= -72.0 and xAxis <= -23.0 and yAxis <= 16.6 and yAxis >= -24.0: #left
-                    stringToSend = command_code_index[11]#+","+to_string(xAxis)
-                if xAxis >= 23.0  and xAxis <= 72.0 and yAxis <= 16.6 and yAxis >= -24.0: #right
-                    stringToSend = command_code_index[12]#+","+to_string(xAxis)
-                
-                if xAxis >= -28 and xAxis <= 23 and yAxis <= 100.0 and yAxis >= 78.0:    #Boosted+forward
-                    stringToSend = "Boosted+forward"+","+to_string(yAxis)
-                if xAxis >= -28.0 and xAxis <= 23.0 and yAxis <= -76.0 and yAxis >= -99.0: #Boosted+back
-                    stringToSend = "Boosted+back"+","+to_string(yAxis)
-                if xAxis >= -100.0 and xAxis <= -72.0 and yAxis <= 16.6 and yAxis >= -24.0: #Boosted+left
-                    stringToSend = "Boosted+left"+","+to_string(xAxis)
-                if xAxis >= 72.0  and xAxis <= 99.0 and yAxis <= 16.6 and yAxis >= -24.0: #Boosted+right
-                    stringToSend = "Boosted+right"+","+to_string(xAxis)
+                    print xAxis,"--x--"
+                    print yAxis,"--y--"
+                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= 100.0 and yAxis >3.5: #Forward
+                    stringToSend = command_code_index[13]+","+to_string(yAxis)
+                    print xAxis,"--x--"
+                    print yAxis,"--y--"
+                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= -11.0 and yAxis >= -99.0: #Back
+                    stringToSend = command_code_index[14]+","+to_string(yAxis)
+                    print xAxis,"--x--"
+                    print yAxis,"--y--"
+                if xAxis >= -100.0 and xAxis < -30.0 and yAxis <= 3.5 and yAxis >= -11.0: #Left
+                    stringToSend = command_code_index[11]+","+to_string(xAxis)
+                    print xAxis,"--x--"
+                    print yAxis,"--y--"
+                if xAxis >= 15.0  and xAxis <= 99.0 and yAxis <= 3.5 and yAxis >= -11.0: #Right
+                    stringToSend = command_code_index[12]+","+to_string(xAxis)
+                    print xAxis,"--x--"
+                    print yAxis,"--y--"
             elif event.type == pygame.JOYBUTTONUP:
                 stringToSend = "_"
             
         if stringToSend != "_" and stringToSend != "Stand":
             pub.publish(stringToSend)
         rate.sleep()
+        
+
 if __name__ == '__main__':
     choice = raw_input("Controller or Keyboard [c/k]\n")
     try:
@@ -127,5 +133,7 @@ if __name__ == '__main__':
             KeyboardController()
         elif choice == 'c':
             JoySticktalker()
+        else:
+            print 'Invalid selection. C for controller, K for keyboard'
     except rospy.ROSInterruptException:
-        pass
+        print '[ERROR] ROS interrupt exception'

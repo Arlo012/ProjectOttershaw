@@ -352,63 +352,80 @@ class LegMover:
 		self.commandQueue = deque(maxlen=commandBufferSize)
 		
 		self.legMovementDicts = doNothingMovements
-		self.previousCommand = 'Nothing'
 		
 		'''
 		#Default, sit down. This is the dictionary processed in the main GetNextCommandSet() loop
 		else:			#Stand up
 			self.legMovementDicts = sitDownMovements	#HACK: This isn't working quite right at boot, but gets the job done
 			#Set safe default position to sitting down
-			self.previousCommand = 'Down'
 		'''
 		#Flags for safe walking testing & PacMan mode - Reset to standing after new command flag is set
 		self.resetOnceFlag = False
-		self.standingMode = False
+# 		self.standingMode = False
 		
 	
 	'''
 	Set the current movement command out of the pre-defined movements (see init)
 	Command: String of form
 		Forward, Back, Left, Right, SpinLeft, SpinRight, Up, Down, Stand
+	optional: if using joystick, will be comma separated with, ex) Forward,56 where
+	the second value is a magnitude 0-100 of how fast to move
 	'''
 	def SetMovementCommand(self, command):
 		self.debugChannel.publish('[INFO] New movement command: ' + command)
-		
+		parsedCommand = command.split(',')
+		try:
+			commandName = parsedCommand[0]									#Get the string name (to lookup in dictionary) of this command
+			commandMagnitude = abs((float)(parsedCommand[1])/100.0)			#Will fail if keyboard is being used (no parsedCommand[1])
+			if commandMagnitude > 1 or commandMagnitude <= 0:						#Check no garbage value that will break the robot is passed in
+				self.debugChannel.publish('[ERROR] Invalid move speed command sent. Check controller calibration')
+				commandMagnitude = 1.0
+		except:
+			commandMagnitude = 1.0							#Use a default full speed magnitude
+			
 		#Try finding a match between this command and the dictionary of available commands
 		try:
-			commandLookup = self.commandLegMovementDict[command]		#Lookup command in commandLegMovementDict
-			self.debugChannel.publish('[INFO] Received valid move command')
+			commandLookup = self.commandLegMovementDict[commandName]		#Lookup command in commandLegMovementDict; will except if DNE
+			
+			#Scale command speed that we just looked up by the magnitude passed in from the controller/ keyboard
+			scaledCommand = copy.deepcopy(commandLookup)		#Make a copy of the dictionary so we dont modify the original
+			
+			for dictionary in scaledCommand:			#Modify every command in the dictionary to scale its speed
+				for key in dictionary:
+					dictionary[key].timeToExecute = dictionary[key].timeToExecute / commandMagnitude
+			
+			self.debugChannel.publish('[INFO] Received valid move command to move ' + str(commandName) + ' with magnitude ' + str(commandMagnitude))
 			
 			#Catch special freeze/ stand up command
-			if command == 'Freeze':
+			if commandName == 'Freeze':
 				self.debugChannel.publish('[INFO] Received emergency freeze command')
 				self.legMovementDicts = self.commandLegMovementDict['Nothing']
 				
-			if command == 'Stand':
+			if commandName == 'Stand':
 				self.debugChannel.publish('[INFO] Stand command received. Robot resetting to standing position')
 				self.resetOnceFlag = True	
-		except:
-			self.debugChannel.publish('[WARNING] Invalid movement command sent to robot')
+		except Exception as e:
+			self.debugChannel.publish('[WARNING] Invalid movement command sent to robot: ' + str(e))
 			return
 		
-		#Found command, process based on moveMode
-		if self.moveMode is 'PacMan':		#Ignore the command queue -- this command is now all we care about
-			self.resetOnceFlag = True		#For safety, return to the standing position first
-			if command == 'Stand':
-				self.debugChannel.publish('[INFO] Stand command received. Robot returning to standing position')
-				self.standingMode = True
+		try:
+			#Found command, process based on moveMode
+			if self.moveMode is 'PacMan':		#Ignore the command queue -- this command is now all we care about
+				self.resetOnceFlag = True		#For safety, return to the standing position first
+				if commandName == 'Stand':
+					self.debugChannel.publish('[INFO] Stand command received. Robot returning to standing position')
+				else:
+					self.legMovementDicts = scaledCommand		#Ignoring queue, over-write current movement command with new one
+						
+			elif self.moveMode is 'Standard':	#Respect the command queue -- this command is added to the to-be-executed	
+				self.debugChannel.publish('[INFO] Appended valid command to queue')
+				self.commandQueue.append(scaledCommand)	#Append to 'right' of queue, get from 'left'
+			
 			else:
-				self.standingMode = False
-				self.legMovementDicts = commandLookup		#Ignoring queue, over-write current movement command with new one
-					
-		elif self.moveMode is 'Standard':	#Respect the command queue -- this command is added to the to-be-executed	
-			self.previousCommand = command			#This was a valid command, passed above checks
-			self.debugChannel.publish('[INFO] Appended valid command to queue')
-			self.commandQueue.append(commandLookup)	#Append to 'right' of queue, get from 'left'
-		
-		else:
-			self.debugChannel.publish('[ERROR] Tried to set a movement command with uninitialized or invalid movement mode.')
-			return
+				self.debugChannel.publish('[ERROR] Tried to set a movement command with uninitialized or invalid movement mode.')
+				return
+		except Exception as e:
+			self.debugChannel.publish('[ERROR] Failed to generate command: ' + str(e))
 	
 	'''
 	Returns a series of commands for the next leg movement
@@ -426,12 +443,6 @@ class LegMover:
 		#90/90/90 calibration mode
 		if self.calibrationMode:
 			return self.Get90DegreeCommand()
-		
-		#Stand up mode
-		if self.standingMode:
-			self.debugChannel.publish('[INFO] {DEPRECATED} I am standing. Note this functionality is to be phased out')
-			self.currentLegCoordinates = copy.deepcopy(standingCoordinates)
-			return self.GetStandCommand()
 		
 		#Stand coordinates for transitioning between commands
 		elif self.resetOnceFlag:
@@ -482,10 +493,11 @@ class LegMover:
 					allMovementsComplete = False							#There was a movement this loop
 					moveVector = movement.motion[self.nextMotionIndex]
 					for leg in legs:											#Generate a command for each leg
+				
 						if self.currentLegCoordinates[leg].z <= 15 and self.currentLegCoordinates[leg].z >= -7:				#Safety check: robot not too high/low
 							if movement.coordinatePlane is 'Robot':		#Build coordinate on robot plane (+x, +y absolute)
 								adjustedMoveVector = self.TransformLegDirections(leg, moveVector)		#Adjust Y coordinate appropriately
-								ly 
+
 								#Add this new movement to the current position
 								self.currentLegCoordinates[leg].AddToSelf(adjustedMoveVector)
 							
@@ -507,11 +519,11 @@ class LegMover:
 								self.currentLegCoordinates[leg].z = -7
 							self.debugChannel.publish('[WARNING] Rejected movement command - Z coordinate too high')
 				if debugMode:		
-					self.debugChannel.publish('All commands created for leg set : ' + str(legs))
+					self.debugChannel.publish('[INFO] All commands created for leg set : ' + str(legs))
 			self.nextMotionIndex += 1			#Increment which motion we are doing in the differential array
 			if allMovementsComplete:			#Complete whole for loop with no new movements -- go to next leg set
 				if debugMode:
-					self.debugChannel.publish('All movements complete')
+					self.debugChannel.publish('[INFO] All movements complete')
 				self.nextMotionIndex = 0
 				self.legMovementDictToProcess += 1
 			return commandSet			
