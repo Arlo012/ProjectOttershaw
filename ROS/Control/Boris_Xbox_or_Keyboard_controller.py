@@ -5,6 +5,7 @@ from std_msgs.msg import Float32
 #file to class in python, python init, create instance of class in some other function, us it to call init, one function in there called moveservo, 
 import curses
 import pygame
+import math
 from jinja2.runtime import to_string
 
 def KeyboardController():
@@ -95,37 +96,30 @@ def JoySticktalker():
                     print command_code_index[event.button]
             elif event.type == pygame.JOYAXISMOTION:
                 xAxis=joysticks[0].get_axis(0)*100
-                yAxis=-(joysticks[0].get_axis(1)*100)
+                yAxis=joysticks[0].get_axis(1)*100
                 #print xAxis,"--x--"
                 #print yAxis,"--y--"
-                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= 3.5 and yAxis >= -11.0:  #Stand (dead zone)
+                xBound = abs(xAxis)
+                yBound = abs(yAxis)
+                radius = 30
+                deg_angle = math.atan2(yAxis,xAxis)*180/math.pi + 180
+                if xBound <= radius and yBound <=radius:
                     stringToSend = command_code_index[7]
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
-                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= 100.0 and yAxis >3.5: #Forward
-                    stringToSend = command_code_index[13]+","+to_string(yAxis)
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
-                if xAxis >= -30.0 and xAxis <= 15.0 and yAxis <= -11.0 and yAxis >= -99.0: #Back
-                    stringToSend = command_code_index[14]+","+to_string(yAxis)
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
-                if xAxis >= -100.0 and xAxis < -30.0 and yAxis <= 3.5 and yAxis >= -11.0: #Left
-                    stringToSend = command_code_index[11]+","+to_string(xAxis)
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
-                if xAxis >= 15.0  and xAxis <= 99.0 and yAxis <= 3.5 and yAxis >= -11.0: #Right
-                    stringToSend = command_code_index[12]+","+to_string(xAxis)
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
+                else:
+                    if deg_angle >=45 and deg_angle <=135:
+                        stringToSend = command_code_index[13]+","+to_string(yAxis)
+                    if deg_angle >= 225 and deg_angle <=315:
+                        stringToSend = command_code_index[14]+","+to_string(yAxis)                 
+                    if deg_angle > 135 and deg_angle <=225:
+                        stringToSend = command_code_index[12]+","+to_string(yAxis) 
+                    if deg_angle > 315 and deg_angle <=360 or deg_angle >= 0 and deg_angle <45:
+                        stringToSend = command_code_index[11]+","+to_string(yAxis) 
             elif event.type == pygame.JOYBUTTONUP:
                 stringToSend = "_"
             
         if stringToSend != "_" and stringToSend != "Stand":
             pub.publish(stringToSend)
         rate.sleep()
-        
-
 if __name__ == '__main__':
     choice = raw_input("Controller or Keyboard [c/k]\n")
     try:

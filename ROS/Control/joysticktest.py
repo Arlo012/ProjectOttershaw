@@ -70,21 +70,24 @@ def JoyTalker():
                 #print "Joystick '",joysticks[event.joy].get_name(),"' axis",event.axis,"motion."
                 if e.axis==0 or e.axis==1:
                     xAxis=joysticks[0].get_axis(0)*100
-                    yAxis=-(joysticks[0].get_axis(1)*100)
-                    print xAxis,"--x--"
-                    print yAxis,"--y--"
-                    if xAxis > -28.0 and xAxis < 23.0 and yAxis <= 16.5 and yAxis > -24.0:# stand
-                         print x[7]
-                    if xAxis > -28 and xAxis < 23 and yAxis <= 78.0 and yAxis > 16.5:#forward
-                        print x[13]
-                    if xAxis > -28.0 and xAxis < 23.0 and yAxis <= -4.0 and yAxis >= -76.0:#back
-                        print x[14]
-                    if xAxis > -72.0 and xAxis < -23.0 and yAxis <= 16.6 and yAxis >= -24.0: #left
-                        print x[11]
-                    if xAxis > 23.0  and xAxis < 72.0 and yAxis <= 16.6 and yAxis >= -24.0: #right
-                        print x[12]
-                    if xAxis > 32767  or xAxis < -32767 or yAxis > 32767 or yAxis < -32767:
-                        print "speed boost!  COMING SOON!!!"
+                    yAxis=joysticks[0].get_axis(1)*100
+                    #print xAxis,"--x--"
+                    #print yAxis,"--y--"
+                    xBound = abs(xAxis)
+                    yBound = abs(yAxis)
+                    radius = 30
+                    deg_angle = math.atan2(yAxis,xAxis)*180/math.pi + 180
+                    if xBound <= radius and yBound <=radius:
+                        stringToSend = command_code_index[7]
+                    else:
+                        if deg_angle >=45 and deg_angle <=135:
+                            stringToSend = command_code_index[13]+","+to_string(yAxis)
+                        if deg_angle >= 225 and deg_angle <=315:
+                            stringToSend = command_code_index[14]+","+to_string(yAxis)                 
+                        if deg_angle > 135 and deg_angle <=225:
+                            stringToSend = command_code_index[12]+","+to_string(yAxis) 
+                        if deg_angle > 315 and deg_angle <=360 or deg_angle >= 0 and deg_angle <45:
+                            stringToSend = command_code_index[11]+","+to_string(yAxis) 
                 #if event.axis==1:
                 #    yAxis=joysticks[0].get_axis(1)
                 #    print yAxis,"--y--"         
