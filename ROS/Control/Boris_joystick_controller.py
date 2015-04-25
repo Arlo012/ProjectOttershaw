@@ -2,7 +2,8 @@
 import rospy
 from std_msgs.msg import String
 import pygame
-
+import math
+from math import degrees
 
 pygame.init()
 def JoySticktalker():
@@ -34,19 +35,24 @@ def JoySticktalker():
                     print command_code_index[event.button]
             elif event.type == pygame.JOYAXISMOTION:
                 xAxis=joysticks[0].get_axis(0)*100
-                yAxis=-(joysticks[0].get_axis(1)*100)
+                yAxis=joysticks[0].get_axis(1)*100
                 #print xAxis,"--x--"
                 #print yAxis,"--y--"
-                if xAxis > -28.0 and xAxis < 23.0 and yAxis <= 16.5 and yAxis > -24.0:# stand
+                xBound = abs(xAxis)
+                yBound = abs(yAxis)
+                radius = 30
+                deg_angle = math.atan2(yAxis,xAxis)*180/math.pi + 180
+                if xBound <= radius and yBound <=radius:
                     stringToSend = command_code_index[7]
-                if xAxis > -28 and xAxis < 23 and yAxis <= 78.0 and yAxis > 16.5:#forward
-                    stringToSend = command_code_index[13]
-                if xAxis > -28.0 and xAxis < 23.0 and yAxis <= -4.0 and yAxis >= -76.0:#back
-                    stringToSend = command_code_index[14]
-                if xAxis > -72.0 and xAxis < -23.0 and yAxis <= 16.6 and yAxis >= -24.0: #left
-                    stringToSend = command_code_index[11]
-                if xAxis > 23.0  and xAxis < 72.0 and yAxis <= 16.6 and yAxis >= -24.0: #right
-                    stringToSend = command_code_index[12]
+                else:
+                    if deg_angle >=45 and deg_angle <=135:
+                        stringToSend = command_code_index[13]#+","+to_string(yAxis)
+                    if deg_angle >= 225 and deg_angle <=315:
+                        stringToSend = command_code_index[14]+","+to_string(yAxis)                 
+                    if deg_angle > 135 and deg_angle <=225:
+                        stringToSend = command_code_index[12]+","+to_string(yAxis) 
+                    if deg_angle > 315 and deg_angle <=360 or deg_angle >= 0 and deg_angle <45:
+                        stringToSend = command_code_index[11]+","+to_string(yAxis) 
             elif event.type == pygame.JOYBUTTONUP:
                 stringToSend = "_"
             
