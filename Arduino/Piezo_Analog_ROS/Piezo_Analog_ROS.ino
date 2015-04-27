@@ -1,33 +1,30 @@
 #include <ros.h>
-#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 //#include <ottershaw_masta/Analog.h>
 
-//Analog pins for vibration sensor on each leg
-# define analogPins 8
-const int legs[] = {A0, A1, A2, A3, A4, A5, A6, A7};  //Is this possible? Took idea from Knock.ino example
-
-//Threshold constants for the piezo vibration sensor
-//TODO: Define these values through testing of sensor
-#define standingThreshold 20
-#define movingThreshold 100
-#define collisionThreshold 600
+//Analog pins for vibration sensor on each leg: uncomment the appropriate list based on your board
+//#define analogPins 8  //Arduino Mega analog pins
+#define analogPins 6  //Arduino Uno analog pins
+//const int legs[] = {A0, A1, A2, A3, A4, A5, A6, A7};  //Analog pins for Arduino Mega
+const int legs[] = {A0, A1, A2, A3, A4, A5};  //Analog pins for Arduino Uno
 
 //LED pins
 //could incorporate legs on black widow symbol
 //lighting up when on ground
 
-//Begin main class declaration
+//ROS DECLARATIONS
 ros::NodeHandle nh;
-
 //Publisher
-std_msgs:: Int32 int_msg;
+std_msgs:: String str_msg;
 //ottershaw_masta::Analog analog_msg;
+ros::Publisher piezo("piezo", &str_msg);
 
-ros::Publisher piezo("piezo", &int_msg);
+String vibrationMagnitudes = "";
 
 void setup()
 {
   //pinMode(legLEDs, OUTPUT); //There will be more than one
+  //Serial.begin(9600);
   
   //ROS node initialization
   nh.initNode();
@@ -38,27 +35,42 @@ void setup()
 
 void loop()
 {
-  for(int i=0; i < (analogPins-1); i++)
+  vibrationMagnitudes = "";
+  for(int i = 0; i < analogPins; i++)
   {
-    int_msg.data = detectLegStatus(legs[i]);
-    piezo.publish(&int_msg);
-    nh.spinOnce();
+    vibrationMagnitudes += analogRead(legs[i]);  
+    vibrationMagnitudes += " ";
   }
+  
+  char charBuf[60];
+  vibrationMagnitudes.toCharArray(charBuf, 60);
+  str_msg.data = charBuf;
+  piezo.publish(&str_msg);
+  nh.spinOnce();
+  delay(10);  //debugging
 }
 
-int detectLegStatus(int legPin)
-{
-  int legValue = analogRead(legPin);
-  if((legValue < standingThreshold) && (legValue > 0))
-  {
-    return 0;
-  }
-  else if((legValue < movingThreshold) && (legValue > standingThreshold))
-  {
-    return 1;
-  }
-  else if((legValue < collisionThreshold) && (legValue > movingThreshold))
-  {
-    return -1;
-  }
-}
+/*Used for processing on Arduino side by defining states (standing, moving, or collission) 
+with 1, 0, and -1 based on threshold values. This will be done on python side instead.
+*/
+//int detectLegStatus(int legPin)
+//{
+//  int legValue = analogRead(legPin);
+//  //Serial.println(legValue);  //debugging
+//  if ((legValue < standingMax) && (legValue > -1))
+//  {
+//    return 0;
+//  }
+//  else if((legValue < movingMax) && (legValue > standingMax))
+//  {
+//    return 1;
+//  }
+//  else if(legValue > movingMax)
+//  {
+//    return -1;
+//  }
+//  else
+//  {
+//    return 2;
+//  }
+//}
