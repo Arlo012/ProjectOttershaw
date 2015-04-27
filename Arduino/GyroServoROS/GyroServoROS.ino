@@ -137,19 +137,19 @@ void loop()
     {
       currentAngle[i] += stepSize[i];
       servos[i].write(currentAngle[i]);
-//      if( currentAngle[i] > desiredAngle[i]  )
-//      {
-//        servos[i].write(desiredAngle[i]);
-//      }
+      if( currentAngle[i] > desiredAngle[i]  )
+      {
+        servos[i].write(desiredAngle[i]);
+      }
     }
     else if(currentAngle[i] > desiredAngle[i])
     {
       currentAngle[i] -= stepSize[i];
       servos[i].write(currentAngle[i]);
-//      if( currentAngle[i] < desiredAngle[i]  )
-//      {
-//        servos[i].write(desiredAngle[i]);
-//      }
+      if( currentAngle[i] < desiredAngle[i]  )
+      {
+        servos[i].write(desiredAngle[i]);
+      }
     }
     
     else
