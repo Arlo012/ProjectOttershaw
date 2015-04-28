@@ -118,20 +118,20 @@ class LegMover:
 	
 #Ripple Gait
 	#FWD
-	liftUpFwdMotion = [Vector3(0,-2.5,-7)]
-	putDownFwdMotion = [Vector3(0,-2.5,7)]
+	liftUpFwdMotion = [Vector3(0,-2.5,-5)]
+	putDownFwdMotion = [Vector3(0,-2.5,5)]
 	
 	#REV
-	liftUpReverseMotion = [Vector3(0,2.5,-7)]
-	putDownReverseMotion = [Vector3(0,2.5,7)]
+	liftUpReverseMotion = [Vector3(0,2.5,-5)]
+	putDownReverseMotion = [Vector3(0,2.5,5)]
 
 #Wave Gait
 	#FWD
-	standardFwdStepMotion = [Vector3(0,-2.5,-7), Vector3(0,-2.5,7)]
+	standardFwdStepMotion = [Vector3(0,-2.5,-5), Vector3(0,-2.5,5)]
 	halfFwdHump = [Vector3(0,5,0)]
 	
 	#REV
-	standardRevStepMotion = [Vector3(0,2.5,-7), Vector3(0,2.5,7)]
+	standardRevStepMotion = [Vector3(0,2.5,-5), Vector3(0,2.5,5)]
 	halfRevHump = [Vector3(0,-5,0)]
 	
 #Set down
@@ -307,17 +307,14 @@ class LegMover:
 		
 		rotateCCWMovements = [
 			{0 : Movement(LegMover.liftUpHighMotion, 100)},
-			{0 : Movement(LegMover.rotateCWMotion, 100,'Leg')},	#Move in local leg coordinates
+			{1 : Movement(LegMover.rotateCWMotion, 100,'Leg')},	#Move in local leg coordinates
 			{0 : Movement(LegMover.liftDownLowMotion, 100)},
 			
 			{1 : Movement(LegMover.liftUpHighMotion, 100)},
-			{0 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},
-			{1 : Movement(LegMover.rotateCWMotion, 100)},
+			{0 : Movement(LegMover.rotateCWMotion, 100,'Leg')},
 			{1 : Movement(LegMover.liftDownLowMotion, 100)},
 			
-			{0 : Movement(LegMover.liftUpHighMotion, 100)},
-			{1 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},
-			{0 : Movement(LegMover.liftDownLowMotion, 100)}
+ 			{14 : Movement(LegMover.rotateCCWMotion, 100, 'Leg')}	
 		]
 		
 		rotateCWMovements = [
