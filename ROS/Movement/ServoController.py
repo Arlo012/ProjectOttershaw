@@ -139,10 +139,11 @@ if __name__ == '__main__':
 				
 					#Send over ROS
 					controller.SendMessage(moveServoMessages, stepServoMessage)
-			
 					
 			#Delay between each command - pull from the command's timeToExecute field (set by LegMover command generation)
 			delayTime = (float)(command.timeToExecute)/1000.0
+# 			if delayTime != .005:
+# 				print delayTime
 			time.sleep(delayTime)
 	
 		except Exception as e:
