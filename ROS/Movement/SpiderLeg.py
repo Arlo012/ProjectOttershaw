@@ -144,11 +144,13 @@ class MoveCommand:
 		string name
 		coordinatesToMove: dictionary of leg ID : coordinates to move (Vector3)
 		int executionTime: milliseconds to move to this position
+		stepSize: how large a step size the servos on the Arduino should take (larger size = faster movement)
 	'''
 	
-	def __init__(self, name, coordinateArray, executionTime):
+	def __init__(self, name, coordinateArray, stepSize=1, executionTime=100):
 		self.commandName = name
 		self.coordinatesToMove = coordinateArray	  #Dictionary leg # : Vector3 movement
+		self.stepSize = stepSize
 		self.timeToExecute = executionTime
 		
 	'''

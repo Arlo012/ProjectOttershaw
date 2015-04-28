@@ -61,15 +61,17 @@ class Movement:
 	should be separated into different movements, and separated in their 
 	associated movement list.
 	'''
-	def __init__(self, motion, timeToExecute=300, coordinatePlane='Robot'):
+	def __init__(self, motion, timeToExecute=5, stepSize = 1, coordinatePlane='Robot'):
 		'''
 		Args:
 			motion ([Vector3]): list of Vector3 objects to execute as part of this movement
 			timeToExecute: how much time must be alloted for this movement (ms)
 			coordinatePlane: use local leg coordinate plane (+x = out), or robot coordinate plane
 				+x = RIGHT of robot
+			stepSize: maps directly to command step size (larger = faster movement)
 		'''
 		self.motion = motion
+		self.stepSize = stepSize
 		self.timeToExecute = timeToExecute
 		self.coordinatePlane = coordinatePlane
 
@@ -251,24 +253,24 @@ class LegMover:
 		
 		rippleForwardMovements = [ 
 			#First half
-	 		{0 : Movement(LegMover.liftUpFwdMotion, 100)},
-	 		{1 : Movement(LegMover.halfFwdHump, 100)},
-	 		{0 : Movement(LegMover.putDownFwdMotion, 100)},		
+	 		{0 : Movement(LegMover.liftUpFwdMotion, 200)},
+	 		{1 : Movement(LegMover.halfFwdHump, 200)},
+	 		{0 : Movement(LegMover.putDownFwdMotion, 200)},		
 	
 	 		#Second half
-	 		{1 : Movement(LegMover.liftUpFwdMotion, 100)},
-	 		{0 : Movement(LegMover.halfFwdHump, 100)},
-	 		{1 : Movement(LegMover.putDownFwdMotion, 100)}
+	 		{1 : Movement(LegMover.liftUpFwdMotion, 200)},
+	 		{0 : Movement(LegMover.halfFwdHump, 200)},
+	 		{1 : Movement(LegMover.putDownFwdMotion, 200)}
 		]
 		
 		rippleBackwardsMovements = [
-	 		{1 : Movement(LegMover.liftUpReverseMotion, 100)},
-	 		{0 : Movement(LegMover.halfRevHump, 100)},
-	 		{1 : Movement(LegMover.putDownReverseMotion, 100)},
+	 		{1 : Movement(LegMover.liftUpReverseMotion, 200)},
+	 		{0 : Movement(LegMover.halfRevHump, 200)},
+	 		{1 : Movement(LegMover.putDownReverseMotion, 200)},
 	 		
-	 		{0 : Movement(LegMover.liftUpReverseMotion, 100)},
-	 		{1 : Movement(LegMover.halfRevHump, 100)},
-	 		{0 : Movement(LegMover.putDownReverseMotion, 100)}
+	 		{0 : Movement(LegMover.liftUpReverseMotion, 200)},
+	 		{1 : Movement(LegMover.halfRevHump, 200)},
+	 		{0 : Movement(LegMover.putDownReverseMotion, 200)}
 		]
 		
 		strafeLeftMovements = [
@@ -296,11 +298,11 @@ class LegMover:
 		]
 		
 		sitDownMovements = [
-			{14 : Movement(LegMover.sitDownMotion, 5)}
+			{14 : Movement(LegMover.sitDownMotion, 2)}
 		]
 		
 		sitUpMovements = [		
-			{14 : Movement(LegMover.sitUpMotion, 5)}
+			{14 : Movement(LegMover.sitUpMotion, 2)}
 		]
 		
 		rotateCCWMovements = [
@@ -390,7 +392,7 @@ class LegMover:
 			#Scale command speed that we just looked up by the magnitude passed in from the controller/ keyboard
 			scaledCommand = copy.deepcopy(commandLookup)		#Make a copy of the dictionary so we dont modify the original
 			
-			for dictionary in scaledCommand:			#Modify every command in the dictionary to scale its speed
+			for dictionary in scaledCommand:			#Modify every command in the dictionary to scale its execution speed
 				for key in dictionary:
 					dictionary[key].timeToExecute = dictionary[key].timeToExecute / commandMagnitude
 			
@@ -493,7 +495,6 @@ class LegMover:
 					allMovementsComplete = False							#There was a movement this loop
 					moveVector = movement.motion[self.nextMotionIndex]
 					for leg in legs:											#Generate a command for each leg
-				
 						if self.currentLegCoordinates[leg].z <= 15 and self.currentLegCoordinates[leg].z >= -7:				#Safety check: robot not too high/low
 							if movement.coordinatePlane is 'Robot':		#Build coordinate on robot plane (+x, +y absolute)
 								adjustedMoveVector = self.TransformLegDirections(leg, moveVector)		#Adjust Y coordinate appropriately
@@ -504,9 +505,8 @@ class LegMover:
 							elif movement.coordinatePlane is 'Leg':			#Build coordinate on leg plane (+x is out from leg, +y is CW)
 								self.currentLegCoordinates[leg].AddToSelf(moveVector)
 							
-							
 							#Create a command to move to this point
-							command = MoveCommand("LegMovement", {leg : self.currentLegCoordinates[leg]}, movement.timeToExecute)
+							command = MoveCommand("LegMovement", {leg : self.currentLegCoordinates[leg]}, movement.stepSize, movement.timeToExecute)
 							commandSet.append(command)		#Append to the command set to return
 							
 							if debugMode:
@@ -550,7 +550,7 @@ class LegMover:
 	def GetEmptyCommand(self):
 		self.debugChannel.publish('Info: Executing GetEmptyCommand() - TODO:  Please verify working correctly')
 		nothingCommand = []
-		nothingCommand.append(MoveCommand('Nothing', self.currentLegCoordinates, 1000))
+		nothingCommand.append(MoveCommand('Nothing', self.currentLegCoordinates, 100))
 		return nothingCommand
 		
 	'''

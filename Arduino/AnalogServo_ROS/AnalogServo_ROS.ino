@@ -3,22 +3,30 @@
 #include <std_msgs/String.h>
 #include <ottershaw_masta/Servo.h>
 
-//#define arraySize 24
+//Servo and leg setup
 const int arraySize=24;
 Servo servos[arraySize];
 int desiredAngle[arraySize];
 int currentAngle[arraySize];
 int stepSize[arraySize];
 
+//Vibration setup
+const int legs[] = {A0, A1, A2, A3, A4, A5, A6, A7};  //Analog pins for Arduino Mega
+#define analogPins 8 //Arduino Mega analog pins
 
 ros::NodeHandle  nh;              //creates our node handle on the arduino --> I think this is similar to the ROS Master for the python code
 
+//Servo ROS messages
 std_msgs::String message;
 ottershaw_masta::Servo debug;
-ros::Publisher testMessage("messageRecieved", &message);
-ros::Publisher servomessage("legs", &debug);
+
+//Vibration sensor ROS messages
+std_msgs:: String str_msg;
+ros::Publisher piezo("piezo", &str_msg);
+String vibrationMagnitudes = "";
 
 
+//Callback for servo angles
 void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
 {
   digitalWrite(8, HIGH);
@@ -27,28 +35,20 @@ void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
     desiredAngle[servoInfo.ID] = servoInfo.angle;
     stepSize[servoInfo.ID] = servoInfo.stepSize;
   }
-
 }
 
+//Subscriber (to above callback)
+ros::Subscriber<ottershaw_masta::Servo> servoSubscriber("ServoMove", &setServoDestinations);
 
 boolean servoAngleSafe(int ID, int angle)
-{/*
-  if(ID == 1 || ID == 4 || ID == 7 || ID == 10 || ID == 13 || ID == 16 || ID == 19 || ID == 22)
-  {
-    if(angle < 10)
-    {
-      return false;
-    }
-  }*/
+{
+  //DEPRECATED
   return true;
 }
 
-ros::Subscriber<ottershaw_masta::Servo> servoSubscriber("ServoMove", &setServoDestinations);
 
 void setup()
 {
-  //pinMode(8, OUTPUT);
-
   //Leg 1
   servos[0].attach(24);
   servos[1].attach(22);
@@ -105,13 +105,11 @@ void setup()
       currentAngle[i] = 90;
       desiredAngle[i] = 90;
     }
-
   }    
   
-  //Arduino collision prevention offset
+  //Arduino collision prevention offset on boot
   currentAngle[21] = 85;
   desiredAngle[21] = 85;
-  
   
   for (int i = 0; i < arraySize; i++)
   {
@@ -120,24 +118,23 @@ void setup()
   
   delay(1000);
   
-  //nh.getHardware()->setBaud(9600);
   nh.initNode();        //creates a node that is the arduino
   nh.subscribe(servoSubscriber);
-  nh.advertise(testMessage);
-  nh.advertise(servomessage);
-
+  nh.advertise(piezo);
+  
   message.data = "";
 }
 
 void loop()
 { 
+  //Servo handler
   for (int i = 0; i < arraySize; i++)
   {
     if (currentAngle[i] < desiredAngle[i])
     {
       currentAngle[i] += stepSize[i];
       servos[i].write(currentAngle[i]);
-      if( currentAngle[i] > desiredAngle[i]  )
+      if( currentAngle[i] > desiredAngle[i]  )    //Prevent oscillation
       {
         servos[i].write(desiredAngle[i]);
       }
@@ -156,21 +153,23 @@ void loop()
     {
       servos[i].write(currentAngle[i]);
     }
-    
-    //servos[i].write(desiredAngle[i]);
-    
-    //debug.ID=i;
-    //debug.stepSize=stepSize[i];
-    //debug.angle=currentAngle[i];
-    //servomessage.publish(&debug);
-    
-    //nh.spinOnce();
 
     delay(0);
   }
-  //testMessage.publish(&message);  
 
-  //message.data = "yo";
+  //Vibration sensor reader
+  vibrationMagnitudes = "";
+  for(int i = 0; i < analogPins; i++)
+  {
+    vibrationMagnitudes += analogRead(legs[i]);  
+    vibrationMagnitudes += " ";
+  }
+  
+  char charBuf[60];
+  vibrationMagnitudes.toCharArray(charBuf, 60);
+  str_msg.data = charBuf;
+  piezo.publish(&str_msg);
+  nh.spinOnce();
 
   delay(10);
   nh.spinOnce();
