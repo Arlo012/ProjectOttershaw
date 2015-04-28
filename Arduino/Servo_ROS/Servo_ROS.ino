@@ -1,6 +1,5 @@
-#include <ros.h>                  //includes the necessary packages
+#include <ros.h>                  //includes the necessary ROS packages
 #include <Servo.h>
-#include <std_msgs/String.h>
 #include <ottershaw_masta/Servo.h>
 
 //Servo and leg setup
@@ -9,22 +8,10 @@ Servo servos[arraySize];
 int desiredAngle[arraySize];
 int currentAngle[arraySize];
 int stepSize[arraySize];
-
-//Vibration setup
-const int legs[] = {A0, A1, A2, A3, A4, A5, A6, A7};  //Analog pins for Arduino Mega
-#define analogPins 8 //Arduino Mega analog pins
-
 ros::NodeHandle  nh;              //creates our node handle on the arduino --> I think this is similar to the ROS Master for the python code
 
 //Servo ROS messages
-std_msgs::String message;
 ottershaw_masta::Servo debug;
-
-//Vibration sensor ROS messages
-std_msgs:: String str_msg;
-ros::Publisher piezo("piezo", &str_msg);
-String vibrationMagnitudes = "";
-
 
 //Callback for servo angles
 void setServoDestinations(const ottershaw_masta::Servo& servoInfo)
@@ -120,9 +107,7 @@ void setup()
   
   nh.initNode();        //creates a node that is the arduino
   nh.subscribe(servoSubscriber);
-  nh.advertise(piezo);
   
-  message.data = "";
 }
 
 void loop()
@@ -156,20 +141,6 @@ void loop()
 
     delay(0);
   }
-
-  //Vibration sensor reader
-  vibrationMagnitudes = "";
-  for(int i = 0; i < analogPins; i++)
-  {
-    vibrationMagnitudes += analogRead(legs[i]);  
-    vibrationMagnitudes += " ";
-  }
-  
-  char charBuf[60];
-  vibrationMagnitudes.toCharArray(charBuf, 60);
-  str_msg.data = charBuf;
-  piezo.publish(&str_msg);
-  nh.spinOnce();
 
   delay(10);
   nh.spinOnce();
