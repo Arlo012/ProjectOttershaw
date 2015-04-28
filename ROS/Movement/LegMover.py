@@ -307,29 +307,29 @@ class LegMover:
 		
 		rotateCCWMovements = [
 			{0 : Movement(LegMover.liftUpHighMotion, 100)},
-			{0 : Movement(LegMover.rotateCWMotion, 100, coordinatePlane='Leg')},	#Move in local leg coordinates
+			{0 : Movement(LegMover.rotateCWMotion, 100,'Leg')},	#Move in local leg coordinates
 			{0 : Movement(LegMover.liftDownLowMotion, 100)},
 			
 			{1 : Movement(LegMover.liftUpHighMotion, 100)},
-			{0 : Movement(LegMover.rotateCCWMotion, 100,coordinatePlane='Leg')},
-			{1 : Movement(LegMover.rotateCWMotion, 100,coordinatePlane='Leg')},
+			{0 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},
+			{1 : Movement(LegMover.rotateCWMotion, 100)},
 			{1 : Movement(LegMover.liftDownLowMotion, 100)},
 			
 			{0 : Movement(LegMover.liftUpHighMotion, 100)},
-			{1 : Movement(LegMover.rotateCCWMotion, 100,coordinatePlane='Leg')},
+			{1 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},
 			{0 : Movement(LegMover.liftDownLowMotion, 100)}
 		]
 		
 		rotateCWMovements = [
 			{0 : Movement(LegMover.liftUpHighMotion, 100)},   #lift the even indexed legs
-			{1 : Movement(LegMover.rotateCCWMotion, 100,coordinatePlane='Leg')},	 #twist the odd indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
+			{1 : Movement(LegMover.rotateCCWMotion, 100,'Leg')},	 #twist the odd indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
 			{0 : Movement(LegMover.liftDownLowMotion, 100)},	 #put the even numbered legs Down
 			
 			{1 : Movement(LegMover.liftUpHighMotion, 100)},	 #lift the odd indexed legs
-			{0 : Movement(LegMover.rotateCCWMotion, 100,coordinatePlane='Leg')},	 #twist the even indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
+			{0 : Movement(LegMover.rotateCCWMotion, 100, 'Leg')},	 #twist the even indexed legs (currently on the ground keeping the robot up) counterclockwise on the hip joint (servo 1 on each leg)
 			{1 : Movement(LegMover.liftDownLowMotion, 100)},	 #put the even numbered legs Down
 							
-			{14 : Movement(LegMover.rotateCWMotion, 100,coordinatePlane='Leg')}	#Move in local leg coordinates
+			{14 : Movement(LegMover.rotateCWMotion, 100, 'Leg')}	#Move in local leg coordinates
 		]
 		
 		plusXMovements = [
