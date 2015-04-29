@@ -25,7 +25,7 @@ class ServoController:
 		
 		#Setup debug channel for publishing
 		self.debugChannel = rospy.Publisher('Debug', String)
-		
+		time.sleep(0.3)
 		self.debugChannel.publish('[INFO] Initialized remote controller ROS listener')
 
 	'''
@@ -184,4 +184,6 @@ if __name__ == '__main__':
 					#Send over ROS
 					controller.SendMessage(moveServoMessages, stepServoMessage)
 			controller.debugChannel.publish('[WARNING] Recovered by returning to standing position')
+			
+	controller.debugChannel.publish('[INFO] Servo controller shutdown command received. Exiting...')
 			
